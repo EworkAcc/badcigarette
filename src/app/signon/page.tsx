@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Navigation from '../../components/NavBar';
 import SignupPopup from '../../components/SignupPopup';
-import { useGoogleSignIn } from '../../lib/googleAuth';
+import { simpleGoogleSignIn } from '../../lib/googleAuth';
 
 interface CreateUserParams {
   fname: string;
@@ -63,10 +63,10 @@ const LoginPage: React.FC = () => {
       setIsLoading(false);
     }
   };
-  const googleSignIn = useGoogleSignIn(router, setIsLoading);
+
 
   const handleGoogleLogin = async () => {
-    await googleSignIn('/');
+    await simpleGoogleSignIn('/');
   };
 
   const handleSignupClick = (e: React.MouseEvent) => {

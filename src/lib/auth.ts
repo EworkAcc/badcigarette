@@ -1,4 +1,4 @@
-import { NextAuthConfig } from 'next-auth';
+import { NextAuthOptions } from 'next-auth';
 import Google from 'next-auth/providers/google';
 import { JWT } from 'next-auth/jwt';
 import { Session } from 'next-auth';
@@ -6,7 +6,7 @@ import { User, Account, Profile } from 'next-auth';
 import connectDB from './connectDB';
 import GoogleUser from '../models/googleUsers';
 
-export const authConfig: NextAuthConfig = {
+export const authConfig: NextAuthOptions = {
   providers: [
     Google({
       clientId: process.env.AUTH_GOOGLE_ID!,
@@ -76,7 +76,57 @@ export const authConfig: NextAuthConfig = {
       return token;
     }
   },
-  pages: {
-    signIn: '/auth/signin',
-  }
-};  
+
+  session: {
+    strategy: 'jwt',
+    maxAge: 30 * 24 * 60 * 60, // 30 days
+  },
+  
+  cookies: {
+    sessionToken: {
+      name: process.env.NODE_ENV === 'production' 
+        ? '__Secure-next-auth.session-token' 
+        : 'next-auth.session-token',
+      options: {
+        httpOnly: true,
+        sameSite: 'lax',
+        path: '/',
+        secure: false, 
+      },
+    },
+    callbackUrl: {
+      name: process.env.NODE_ENV === 'production' 
+        ? '__Secure-next-auth.callback-url' 
+        : 'next-auth.callback-url',
+      options: {
+        sameSite: 'lax',
+        path: '/',
+        secure: false, 
+      },
+    },
+    csrfToken: {
+      name: process.env.NODE_ENV === 'production' 
+        ? '__Host-next-auth.csrf-token' 
+        : 'next-auth.csrf-token',
+      options: {
+        httpOnly: true,
+        sameSite: 'lax',
+        path: '/',
+        secure: false, 
+      },
+    },
+
+    state: {
+      name: 'next-auth.state',
+      options: {
+        httpOnly: true,
+        sameSite: 'lax',
+        path: '/',
+        secure: false, 
+        maxAge: 900, 
+      },
+    },
+  },
+  
+  debug: process.env.NODE_ENV === 'development',
+};
