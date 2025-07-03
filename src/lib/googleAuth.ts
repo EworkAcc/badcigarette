@@ -13,7 +13,7 @@ interface GoogleSignInResult {
 }
 
 /**
- * Handles Google OAuth sign-in process for NextAuth v5
+ * Handles Google OAuth sign-in process for NextAuth
  * @param router - Next.js router instance for navigation
  * @param options - Sign-in options (optional)
  * @returns Promise with sign-in result
@@ -25,9 +25,21 @@ export const handleGoogleSignIn = async (
   try {
     const { callbackUrl = '/', redirect = true } = options;
     
+    // Use redirect: true to let NextAuth handle the redirect
+    // This helps avoid the state cookie issues
+    if (redirect) {
+      await signIn('google', {
+        callbackUrl,
+        redirect: true,
+      });
+      // If redirect is true, this line won't be reached
+      return { success: true };
+    }
+
+    // For cases where you want to handle redirect manually
     const result: SignInResponse | undefined = await signIn('google', {
       callbackUrl,
-      redirect: false, 
+      redirect: false,
     });
 
     if (result?.error) {
@@ -38,16 +50,12 @@ export const handleGoogleSignIn = async (
       };
     }
 
-    if (result?.ok) {
+    if (result?.ok && result?.url) {
       console.log('Google sign-in successful');
-      
-      if (redirect) {
-        router.push(result.url || callbackUrl);
-      }
-
+      router.push(result.url);
       return {
         success: true,
-        url: result.url || callbackUrl
+        url: result.url
       };
     }
 
@@ -66,16 +74,18 @@ export const handleGoogleSignIn = async (
 };
 
 /**
- * Alternative function for simple Google sign-in with automatic redirect
- * @param router - Next.js router instance for navigation
+ * Simplified function for Google sign-in with automatic redirect
+ * This is the recommended approach for most use cases
  * @param callbackUrl - URL to redirect to after successful sign-in (optional)
  */
 export const simpleGoogleSignIn = async (
-  router: AppRouterInstance,
   callbackUrl: string = '/'
 ): Promise<void> => {
   try {
-    await signIn('google', { callbackUrl });
+    await signIn('google', { 
+      callbackUrl,
+      redirect: true
+    });
   } catch (error) {
     console.error('Google sign-in error:', error);
     throw error;
@@ -84,24 +94,17 @@ export const simpleGoogleSignIn = async (
 
 /**
  * Handles Google sign-in with loading state management
- * @param router - Next.js router instance
  * @param setIsLoading - State setter for loading indicator
- * @param options - Sign-in options
+ * @param callbackUrl - Callback URL after sign-in
  */
 export const handleGoogleSignInWithLoading = async (
-  router: AppRouterInstance,
   setIsLoading: (loading: boolean) => void,
-  options: GoogleSignInOptions = {}
+  callbackUrl: string = '/'
 ): Promise<void> => {
   setIsLoading(true);
   
   try {
-    const result = await handleGoogleSignIn(router, options);
-    
-    if (!result.success) {
-      alert(`Google sign-in failed: ${result.error}`);
-    }
-    
+    await simpleGoogleSignIn(callbackUrl);
   } catch (error) {
     console.error('Google sign-in error:', error);
     alert('Failed to sign in with Google. Please try again.');
@@ -111,19 +114,17 @@ export const handleGoogleSignInWithLoading = async (
 };
 
 /**
- * Simple hook-style function for use in components
- * @param router - Next.js router instance
+ * React hook-style function for use in components
  * @param setIsLoading - Loading state setter (optional)
  */
 export const useGoogleSignIn = (
-  router: AppRouterInstance,
   setIsLoading?: (loading: boolean) => void
 ) => {
   return async (callbackUrl: string = '/') => {
     if (setIsLoading) setIsLoading(true);
     
     try {
-      await signIn('google', { callbackUrl });
+      await simpleGoogleSignIn(callbackUrl);
     } catch (error) {
       console.error('Google sign-in error:', error);
       alert('Failed to sign in with Google. Please try again.');
