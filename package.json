@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "bcryptjs": "^3.0.2",
+    "cookies-next": "^6.0.0",
     "lucide-react": "^0.511.0",
     "mongoose": "^8.15.1",
     "next": "15.3.2",

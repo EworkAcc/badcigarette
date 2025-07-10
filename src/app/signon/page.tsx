@@ -1,10 +1,12 @@
 "use client"
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { signOut } from 'next-auth/react';
 import Navigation from '../../components/NavBar';
 import SignupPopup from '../../components/SignupPopup';
 import { simpleGoogleSignIn } from '../../lib/googleAuth';
+import { getAuthCookie, removeAuthCookie, UserData } from '../../lib/authUtils';
 
 interface CreateUserParams {
   fname: string;
@@ -17,14 +19,33 @@ interface CreateUserParams {
 
 const LoginPage: React.FC = () => {
   const router = useRouter();
+  const [userData, setUserData] = useState<UserData | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
   const [formData, setFormData] = useState({
     email: '',
     password: '',
     rememberMe: false
   });
   const [showPassword, setShowPassword] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoginLoading, setIsLoginLoading] = useState(false);
   const [showSignupPopup, setShowSignupPopup] = useState(false);
+
+  useEffect(() => {
+    const checkAuth = () => {
+      const user = getAuthCookie();
+      setUserData(user);
+      setIsLoading(false);
+    };
+
+    checkAuth();
+
+    const handleStorageChange = () => {
+      checkAuth();
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+    return () => window.removeEventListener('storage', handleStorageChange);
+  }, []);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value, type, checked } = e.target;
@@ -34,39 +55,82 @@ const LoginPage: React.FC = () => {
     }));
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsLoading(true);
-    
-    try {
-      const response = await fetch('/api/auth/login', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          email: formData.email,
-          password: formData.password
-        }),
-      });
+const handleSubmit = async (e: React.FormEvent) => {
+  e.preventDefault();
+  setIsLoginLoading(true);
+ 
+  try {
+    const response = await fetch('/api/auth/login', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        email: formData.email,
+        password: formData.password
+      }),
+    });
 
-      if (response.ok) {
+    if (response.ok) {
+      const responseData = await response.json();
+      
+      if (responseData.user) {
+        setUserData(responseData.user);
+        
+        setTimeout(() => {
+          window.dispatchEvent(new Event('storage'));
+        }, 100);
+        
         router.push('/');
       } else {
-        const errorData = await response.json();
-        alert(`Login failed: ${errorData.message || 'Invalid credentials'}`);
+        setTimeout(() => {
+          const user = getAuthCookie();
+          if (user) {
+            setUserData(user);
+            window.dispatchEvent(new Event('storage'));
+            router.push('/');
+          }
+        }, 200);
       }
-    } catch (error) {
-      console.error('Login error:', error);
-      alert('Login failed. Please try again.');
-    } finally {
-      setIsLoading(false);
+    } else {
+      const errorData = await response.json();
+      alert(`Login failed: ${errorData.message || 'Invalid credentials'}`);
     }
-  };
-
+  } catch (error) {
+    console.error('Login error:', error);
+    alert('Login failed. Please try again.');
+  } finally {
+    setIsLoginLoading(false);
+  }
+};
 
   const handleGoogleLogin = async () => {
     await simpleGoogleSignIn('/');
+  };
+
+  const handleLogout = async () => {
+    try {
+      if (userData?.loginType === 'google') {
+        await signOut({ redirect: false });
+      } else {
+        await fetch('/api/auth/logout', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+        });
+      }
+      
+      removeAuthCookie();
+      setUserData(null);
+      
+      // Trigger storage event to update other tabs
+      window.dispatchEvent(new Event('storage'));
+      
+      // Stay on the same page to show login form
+      
+    } catch (error) {
+      console.error('Logout error:', error);
+      alert('Failed to log out. Please try again.');
+    }
   };
 
   const handleSignupClick = (e: React.MouseEvent) => {
@@ -75,31 +139,111 @@ const LoginPage: React.FC = () => {
   };
 
   const handleSignupSubmit = async (userData: CreateUserParams) => {
-    try {
-      const response = await fetch('/api/auth/signup', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(userData),
-      });
+  try {
+    const response = await fetch('/api/auth/signup', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(userData),
+    });
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Failed to create account');
-      }
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || 'Failed to create account');
+    }
 
-      const newUser = await response.json();
-      alert('Account created successfully!');
-      setShowSignupPopup(false);
+    const responseData = await response.json();
+    alert('Account created successfully!');
+    setShowSignupPopup(false);
+    
+    if (responseData.user) {
+      setUserData(responseData.user);
+      
+      setTimeout(() => {
+        window.dispatchEvent(new Event('storage'));
+      }, 100);
       
       router.push('/');
-      
-    } catch (error: any) {
-      console.error('Error creating user:', error);
-      throw error;
+    } else {
+      setTimeout(() => {
+        const user = getAuthCookie();
+        if (user) {
+          setUserData(user);
+          window.dispatchEvent(new Event('storage'));
+          router.push('/');
+        }
+      }, 200);
     }
-  };
+    
+  } catch (error: any) {
+    console.error('Error creating user:', error);
+    throw error;
+  }
+};
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gray-900 text-white">
+        <Navigation />
+        <div className="flex items-center justify-center px-4 py-12">
+          <div className="w-8 h-8 bg-red-600 rounded-full animate-pulse"></div>
+        </div>
+      </div>
+    );
+  }
+
+  if (userData) {
+    return (
+      <div className="min-h-screen bg-gray-900 text-white">
+        <Navigation />
+        
+        <div className="flex items-center justify-center px-4 py-12">
+          <div className="w-full max-w-md">
+            
+            <div className="text-center mb-8">
+              <h1 className="text-3xl font-bold text-red-400 mb-2">Welcome Back</h1>
+              <p className="text-gray-400">You are already signed in as {userData.name}</p>
+            </div>
+
+            <div className="bg-gray-800 rounded-lg p-8 shadow-xl text-center">
+              <div className="mb-6">
+                <img
+                  src={userData.image || '/defaultPFP.png'}
+                  alt="Profile"
+                  className="w-20 h-20 rounded-full mx-auto mb-4 border-4 border-gray-600"
+                />
+                <h2 className="text-xl font-semibold text-white">{userData.name}</h2>
+                <p className="text-gray-400">{userData.email}</p>
+                <p className="text-sm text-gray-500 mt-2">
+                  Signed in via {userData.loginType === 'google' ? 'Google' : 'Email'}
+                </p>
+              </div>
+
+              <button
+                onClick={handleLogout}
+                className="w-full bg-red-600 hover:bg-red-700 text-white font-medium py-3 px-4 rounded-md transition-colors flex items-center justify-center"
+              >
+                <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                </svg>
+                Log Out
+              </button>
+            </div>
+
+            <div className="text-center mt-6">
+              <button 
+                onClick={() => router.push('/')}
+                className="text-red-400 hover:text-red-300 font-medium"
+              >
+                ← Back to Home
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-900 text-white">
@@ -185,10 +329,10 @@ const LoginPage: React.FC = () => {
               </div>
               <button
                 type="submit"
-                disabled={isLoading}
+                disabled={isLoginLoading}
                 className="w-full bg-red-600 hover:bg-red-700 disabled:bg-red-800 disabled:cursor-not-allowed text-white font-medium py-3 px-4 rounded-md transition-colors flex items-center justify-center"
               >
-                {isLoading ? (
+                {isLoginLoading ? (
                   <>
                     <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                       <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>

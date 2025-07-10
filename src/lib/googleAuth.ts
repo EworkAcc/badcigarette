@@ -25,18 +25,14 @@ export const handleGoogleSignIn = async (
   try {
     const { callbackUrl = '/', redirect = true } = options;
     
-    // Use redirect: true to let NextAuth handle the redirect
-    // This helps avoid the state cookie issues
     if (redirect) {
       await signIn('google', {
         callbackUrl,
         redirect: true,
       });
-      // If redirect is true, this line won't be reached
       return { success: true };
     }
 
-    // For cases where you want to handle redirect manually
     const result: SignInResponse | undefined = await signIn('google', {
       callbackUrl,
       redirect: false,
@@ -74,21 +70,46 @@ export const handleGoogleSignIn = async (
 };
 
 /**
- * Simplified function for Google sign-in with automatic redirect
- * This is the recommended approach for most use cases
+ * Simplified function for Google sign-in with custom cookie integration
+ * This integrates with your custom auth cookie system
  * @param callbackUrl - URL to redirect to after successful sign-in (optional)
  */
 export const simpleGoogleSignIn = async (
   callbackUrl: string = '/'
 ): Promise<void> => {
   try {
-    await signIn('google', { 
-      callbackUrl,
-      redirect: true
+    const result = await signIn('google', { 
+      redirect: false,
+      callbackUrl 
     });
+    
+    if (result?.ok) {
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      const response = await fetch('/api/auth/google-cookie', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        
+        window.dispatchEvent(new Event('storage'));
+        
+        window.location.href = callbackUrl;
+      } else {
+        console.error('Failed to set custom auth cookie');
+        window.location.href = callbackUrl;
+      }
+    } else {
+      console.error('Google sign-in failed:', result?.error);
+      alert('Google sign-in failed. Please try again.');
+    }
   } catch (error) {
     console.error('Google sign-in error:', error);
-    throw error;
+    alert('Google sign-in failed. Please try again.');
   }
 };
 

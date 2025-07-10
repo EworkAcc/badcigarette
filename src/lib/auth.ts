@@ -2,15 +2,14 @@ import { NextAuthOptions } from 'next-auth';
 import Google from 'next-auth/providers/google';
 import { JWT } from 'next-auth/jwt';
 import { Session } from 'next-auth';
-import { User, Account, Profile } from 'next-auth';
 import connectDB from './connectDB';
 import GoogleUser from '../models/googleUsers';
 
 export const authConfig: NextAuthOptions = {
   providers: [
     Google({
-      clientId: process.env.AUTH_GOOGLE_ID!,
-      clientSecret: process.env.AUTH_GOOGLE_SECRET!,
+      clientId: process.env.AUTH_GOOGLE_ID || "",
+      clientSecret: process.env.AUTH_GOOGLE_SECRET || "",
     })
   ],
   callbacks: {
@@ -23,23 +22,27 @@ export const authConfig: NextAuthOptions = {
             email: user.email 
           });
 
+          let dbUser;
           if (!existingUser) {
-            await GoogleUser.create({
+            dbUser = await GoogleUser.create({
               googleId: account.providerAccountId,
               email: user.email,
               name: user.name,
               image: user.image
             });
           } else {
-            await GoogleUser.findOneAndUpdate(
+            dbUser = await GoogleUser.findOneAndUpdate(
               { email: user.email },
               {
                 name: user.name,
                 image: user.image,
                 googleId: account.providerAccountId
-              }
+              },
+              { new: true }
             );
           }
+
+          user.id = dbUser._id.toString();
           
           return true;
         } catch (error) {
@@ -49,6 +52,15 @@ export const authConfig: NextAuthOptions = {
       }
       return true;
     },
+    
+    async jwt({ token, account, user }) {
+      if (account?.provider === 'google' && user) {
+        token.userId = user.id;
+        token.loginType = 'google';
+      }
+      return token;
+    },
+    
     async session({ session, token }: { session: Session; token: JWT }) {
       if (session?.user?.email) {
         try {
@@ -62,7 +74,8 @@ export const authConfig: NextAuthOptions = {
               ...session,
               user: {
                 ...session.user,
-                id: dbUser._id.toString()
+                id: dbUser._id.toString(),
+                loginType: 'google'
               }
             };
           }
@@ -71,15 +84,16 @@ export const authConfig: NextAuthOptions = {
         }
       }
       return session;
-    },
-    async jwt({ token, account }) {
-      return token;
     }
+  },
+
+  pages: {
+    signIn: '/signon', 
   },
 
   session: {
     strategy: 'jwt',
-    maxAge: 30 * 24 * 60 * 60, // 30 days
+    maxAge: 30 * 24 * 60 * 60,
   },
   
   cookies: {
@@ -91,7 +105,7 @@ export const authConfig: NextAuthOptions = {
         httpOnly: true,
         sameSite: 'lax',
         path: '/',
-        secure: false, 
+        secure: process.env.NODE_ENV === 'production', 
       },
     },
     callbackUrl: {
@@ -101,7 +115,7 @@ export const authConfig: NextAuthOptions = {
       options: {
         sameSite: 'lax',
         path: '/',
-        secure: false, 
+        secure: process.env.NODE_ENV === 'production', 
       },
     },
     csrfToken: {
@@ -112,17 +126,16 @@ export const authConfig: NextAuthOptions = {
         httpOnly: true,
         sameSite: 'lax',
         path: '/',
-        secure: false, 
+        secure: process.env.NODE_ENV === 'production', 
       },
     },
-
     state: {
       name: 'next-auth.state',
       options: {
         httpOnly: true,
         sameSite: 'lax',
         path: '/',
-        secure: false, 
+        secure: process.env.NODE_ENV === 'production', 
         maxAge: 900, 
       },
     },
