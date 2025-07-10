@@ -1,3 +1,4 @@
+
 import { NextRequest, NextResponse } from 'next/server';
 import bcrypt from 'bcryptjs';
 import connectDB from '../../../../lib/connectDB';
@@ -5,8 +6,7 @@ import User from '../../../../models/User';
 
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json();
-    const { email, password } = body;
+    const { email, password } = await request.json();
 
     if (!email || !password) {
       return NextResponse.json(
@@ -16,8 +16,7 @@ export async function POST(request: NextRequest) {
     }
 
     await connectDB();
-    
-    // Find user by email
+
     const user = await User.findOne({ email });
     if (!user) {
       return NextResponse.json(
@@ -26,7 +25,6 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Check password
     const isPasswordValid = await bcrypt.compare(password, user.password);
     if (!isPasswordValid) {
       return NextResponse.json(
@@ -35,17 +33,30 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Return success response (don't include password)
-    const userResponse = {
+    const userData = {
       id: user._id.toString(),
-      fname: user.fname,
-      lname: user.lname,
+      name: `${user.fname} ${user.lname}`,
       email: user.email,
-      phone: user.phone,
-      city: user.city
+      image: user.image,
+      loginType: 'standard' as const
     };
 
-    return NextResponse.json(userResponse, { status: 200 });
+    const response = NextResponse.json(
+      { message: 'Login successful', user: userData },
+      { status: 200 }
+    );
+
+    const cookieOptions = {
+      httpOnly: false,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax' as const,
+      maxAge: 30 * 24 * 60 * 60,
+      path: '/',
+    };
+
+    response.cookies.set('auth_user', JSON.stringify(userData), cookieOptions);
+
+    return response;
 
   } catch (error) {
     console.error('Login error:', error);

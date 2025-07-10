@@ -3,30 +3,10 @@ import bcrypt from 'bcryptjs';
 import connectDB from '../../../../lib/connectDB';
 import User from '../../../../models/User';
 
-interface CreateUserParams {
-  fname: string;
-  lname: string;
-  email: string;
-  password: string;
-  phone: string;
-  city: string;
-}
-
-interface UserResponse {
-  id: string;
-  fname: string;
-  lname: string;
-  email: string;
-  phone: string;
-  city: string;
-}
-
 export async function POST(request: NextRequest) {
   try {
-    const body: CreateUserParams = await request.json();
-    const { fname, lname, email, password, phone, city } = body;
+    const { fname, lname, email, password, phone, city } = await request.json();
 
-    // Validate required fields
     if (!fname || !lname || !email || !password || !phone || !city) {
       return NextResponse.json(
         { message: 'All fields are required' },
@@ -35,8 +15,7 @@ export async function POST(request: NextRequest) {
     }
 
     await connectDB();
-    
-    // Check if user already exists
+
     const existingUser = await User.findOne({ email });
     if (existingUser) {
       return NextResponse.json(
@@ -45,36 +24,45 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Hash password
-    const saltRounds = 12;
-    const hashedPassword = await bcrypt.hash(password, saltRounds);
+    const hashedPassword = await bcrypt.hash(password, 12);
 
-    // Create new user
-    const newUser = new User({
+    const newUser = await User.create({
       fname,
       lname,
       email,
       password: hashedPassword,
       phone,
-      city
+      city,
+      pfp: '/defaultPFP.png'
     });
 
-    await newUser.save();
-
-    // Return success response (don't include password)
-    const userResponse: UserResponse = {
+    const userData = {
       id: newUser._id.toString(),
-      fname: newUser.fname,
-      lname: newUser.lname,
+      name: `${newUser.fname} ${newUser.lname}`,
       email: newUser.email,
-      phone: newUser.phone,
-      city: newUser.city
+      image: newUser.pfp,
+      loginType: 'standard' as const
     };
 
-    return NextResponse.json(userResponse, { status: 201 });
+    const response = NextResponse.json(
+      { message: 'User created successfully', user: userData },
+      { status: 201 }
+    );
+
+    const cookieOptions = {
+      httpOnly: false,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax' as const,
+      maxAge: 30 * 24 * 60 * 60,
+      path: '/',
+    };
+
+    response.cookies.set('auth_user', JSON.stringify(userData), cookieOptions);
+
+    return response;
 
   } catch (error) {
-    console.error('Error creating user:', error);
+    console.error('Signup error:', error);
     return NextResponse.json(
       { message: 'Internal server error' },
       { status: 500 }
