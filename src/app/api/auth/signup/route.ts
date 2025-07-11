@@ -5,9 +5,9 @@ import User from '../../../../models/User';
 
 export async function POST(request: NextRequest) {
   try {
-    const { fname, lname, email, password, phone, city } = await request.json();
+    const { fname, lname, email, password, phone, country } = await request.json();
 
-    if (!fname || !lname || !email || !password || !phone || !city) {
+    if (!fname || !lname || !email || !password || !phone || !country) {
       return NextResponse.json(
         { message: 'All fields are required' },
         { status: 400 }
@@ -32,7 +32,7 @@ export async function POST(request: NextRequest) {
       email,
       password: hashedPassword,
       phone,
-      city,
+      country,
       pfp: '/defaultPFP.png'
     });
 

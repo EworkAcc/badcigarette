@@ -11,7 +11,7 @@ interface SignupPopupProps {
     email: string;
     password: string;
     phone: string;
-    city: string;
+    country: string;
   }) => void;
 }
 
@@ -22,7 +22,7 @@ const SignupPopup: React.FC<SignupPopupProps> = ({ isOpen, onClose, onSubmit }) 
     email: '',
     password: '',
     phone: '',
-    city: '',
+    country: '',
     isOver18: false
   });
   
@@ -35,7 +35,7 @@ const SignupPopup: React.FC<SignupPopupProps> = ({ isOpen, onClose, onSubmit }) 
   const emailRef = useRef<HTMLInputElement>(null);
   const passwordRef = useRef<HTMLInputElement>(null);
   const phoneRef = useRef<HTMLInputElement>(null);
-  const cityRef = useRef<HTMLInputElement>(null);
+  const countryRef = useRef<HTMLInputElement>(null);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value, type, checked } = e.target;
@@ -44,7 +44,6 @@ const SignupPopup: React.FC<SignupPopupProps> = ({ isOpen, onClose, onSubmit }) 
       [name]: type === 'checkbox' ? checked : value
     }));
     
-    // Clear error when user starts typing
     if (error) {
       setError('');
     }
@@ -68,27 +67,24 @@ const SignupPopup: React.FC<SignupPopupProps> = ({ isOpen, onClose, onSubmit }) 
       email: emailRef.current?.value || '',
       password: passwordRef.current?.value || '',
       phone: phoneRef.current?.value || '',
-      city: cityRef.current?.value || ''
+      country: countryRef.current?.value || ''
     };
 
     try {
       await onSubmit(userData);
-      // Reset form after successful submission
       setFormData({
         fname: '',
         lname: '',
         email: '',
         password: '',
         phone: '',
-        city: '',
+        country: '',
         isOver18: false
       });
     } catch (error: any) {
       console.error('Signup error:', error);
-      // Show error message with flashing effect
       setError(error.message || 'An error occurred during signup');
       
-      // Add flashing effect to the error message
       setTimeout(() => {
         const errorElement = document.getElementById('signup-error');
         if (errorElement) {
@@ -245,21 +241,21 @@ const SignupPopup: React.FC<SignupPopupProps> = ({ isOpen, onClose, onSubmit }) 
             />
           </div>
 
-          {/* City */}
+          {/* country */}
           <div>
-            <label htmlFor="city" className="block text-sm font-medium text-gray-300 mb-2">
-              City
+            <label htmlFor="country" className="block text-sm font-medium text-gray-300 mb-2">
+              Country
             </label>
             <input
-              ref={cityRef}
+              ref={countryRef}
               type="text"
-              id="city"
-              name="city"
-              value={formData.city}
+              id="country"
+              name="country"
+              value={formData.country}
               onChange={handleInputChange}
               required
               className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500 transition-colors"
-              placeholder="Enter your city"
+              placeholder="Enter your country"
             />
           </div>
 
