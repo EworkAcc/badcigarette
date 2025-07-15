@@ -146,7 +146,6 @@ const ForumComponent: React.FC<ForumComponentProps> = ({
     <div className="min-h-screen bg-gray-900 text-white">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         
-        {/* Header */}
         <div className="mb-8">
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4">
             <div>
@@ -165,7 +164,6 @@ const ForumComponent: React.FC<ForumComponentProps> = ({
             </button>
           </div>
 
-          {/* Breadcrumb */}
           <nav className="text-sm text-gray-400">
             <a href="#" className="hover:text-white">Forums</a>
             {cigaretteName && (
@@ -181,11 +179,9 @@ const ForumComponent: React.FC<ForumComponentProps> = ({
 
         <div className="flex flex-col lg:flex-row gap-8">
           
-          {/* Sidebar */}
           <div className="lg:w-1/4">
             <div className="space-y-6">
               
-              {/* Search */}
               <div className="bg-gray-800 rounded-lg p-4">
                 <h3 className="font-semibold mb-3 text-red-400">Search Forum</h3>
                 <input
@@ -196,8 +192,6 @@ const ForumComponent: React.FC<ForumComponentProps> = ({
                   className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-red-500"
                 />
               </div>
-
-              {/* Categories Filter */}
               <div className="bg-gray-800 rounded-lg p-4">
                 <h3 className="font-semibold mb-3 text-red-400">Categories</h3>
                 <div className="space-y-2">
@@ -227,7 +221,6 @@ const ForumComponent: React.FC<ForumComponentProps> = ({
                 </div>
               </div>
 
-              {/* Forum Stats */}
               <div className="bg-gray-800 rounded-lg p-4">
                 <h3 className="font-semibold mb-3 text-red-400">Forum Stats</h3>
                 <div className="space-y-2 text-sm">
@@ -250,7 +243,6 @@ const ForumComponent: React.FC<ForumComponentProps> = ({
                 </div>
               </div>
 
-              {/* Quick Links */}
               <div className="bg-gray-800 rounded-lg p-4">
                 <h3 className="font-semibold mb-3 text-red-400">Quick Links</h3>
                 <ul className="space-y-2 text-sm">
@@ -263,10 +255,8 @@ const ForumComponent: React.FC<ForumComponentProps> = ({
             </div>
           </div>
 
-          {/* Main Content */}
           <div className="lg:w-3/4">
             
-            {/* Categories Overview (only for general forums) */}
             {forumType === 'general' && (
               <div className="bg-gray-800 rounded-lg p-6 mb-8">
                 <h2 className="text-2xl font-semibold mb-6 text-red-400">Forum Categories</h2>
@@ -299,7 +289,6 @@ const ForumComponent: React.FC<ForumComponentProps> = ({
               </div>
             )}
 
-            {/* Forum Controls */}
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6">
               <div className="flex items-center space-x-4 mb-4 sm:mb-0">
                 <select
@@ -318,7 +307,6 @@ const ForumComponent: React.FC<ForumComponentProps> = ({
               </div>
             </div>
 
-            {/* Forum Posts */}
             <div className="bg-gray-800 rounded-lg overflow-hidden">
               <div className="hidden sm:grid sm:grid-cols-12 gap-4 p-4 bg-gray-700 text-sm font-medium text-gray-300">
                 <div className="col-span-6">Topic</div>
@@ -333,7 +321,6 @@ const ForumComponent: React.FC<ForumComponentProps> = ({
                   <div key={post.id} className="p-4 hover:bg-gray-750">
                     <div className="grid grid-cols-1 sm:grid-cols-12 gap-4">
                       
-                      {/* Topic */}
                       <div className="sm:col-span-6">
                         <div className="flex items-start space-x-2">
                           <div className="flex flex-col space-y-1">
@@ -359,22 +346,18 @@ const ForumComponent: React.FC<ForumComponentProps> = ({
                         </div>
                       </div>
 
-                      {/* Author */}
                       <div className="hidden sm:block sm:col-span-2 text-center">
                         <div className="text-sm text-gray-300">{post.author}</div>
                       </div>
 
-                      {/* Replies */}
                       <div className="hidden sm:block sm:col-span-1 text-center">
                         <div className="text-sm text-gray-300">{post.replies}</div>
                       </div>
 
-                      {/* Views */}
                       <div className="hidden sm:block sm:col-span-1 text-center">
                         <div className="text-sm text-gray-300">{post.views}</div>
                       </div>
 
-                      {/* Last Activity */}
                       <div className="hidden sm:block sm:col-span-2 text-center">
                         <div className="text-sm text-gray-300">{post.lastActivity}</div>
                         <div className="text-xs text-gray-500">by {post.lastAuthor}</div>
@@ -385,7 +368,6 @@ const ForumComponent: React.FC<ForumComponentProps> = ({
               </div>
             </div>
 
-            {/* Pagination */}
             <div className="flex justify-center mt-8">
               <div className="flex space-x-2">
                 <button className="px-3 py-2 bg-gray-700 text-gray-300 rounded-md hover:bg-gray-600">
@@ -403,7 +385,6 @@ const ForumComponent: React.FC<ForumComponentProps> = ({
         </div>
       </div>
 
-      {/* New Topic Modal */}
       {showNewTopicModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
           <div className="bg-gray-800 rounded-lg p-6 w-full max-w-2xl">

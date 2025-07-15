@@ -2,21 +2,58 @@
 import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { signOut, useSession } from 'next-auth/react';
-import { getAuthCookie, getUserImage, getUserDisplayName, removeAuthCookie, UserData } from '../lib/authUtils';
+import { getAuthCookie, getUserImage, getUserDisplayName, removeAuthCookie, UserData } from '../lib/authUtils.client';
 
 const Navigation: React.FC = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
   const [userData, setUserData] = useState<UserData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isValidating, setIsValidating] = useState(false);
   const profileMenuRef = useRef<HTMLDivElement>(null);
   
-  // Use NextAuth session for Google login
   const { data: session, status } = useSession();
 
+  const validateUser = async (user: UserData) => {
+    if (isValidating) return true;
+    
+    if (process.env.NEXT_PUBLIC_ENV === 'development') {
+      console.log('Skipping user validation in development mode');
+      return true;
+    }
+  
+    try {
+      setIsValidating(true);
+      const response = await fetch('/api/validateUser', {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+    
+      if (response.status === 404) {
+        console.log('User no longer exists in database, logging out');
+        await handleLogout();
+        return false;
+      }
+      
+      if (!response.ok) {
+        console.log('User validation failed due to server error, but not logging out');
+        return false;
+      }
+    
+      const data = await response.json();
+      return data.valid;
+    } catch (error) {
+      console.error('Error validating user:', error);
+      return false;
+    } finally {
+      setIsValidating(false);
+    }
+  };
+
   useEffect(() => {
-    const checkAuth = () => {
-      // First check for NextAuth session (Google login)
+    const checkAuth = async () => {
       if (session?.user) {
         const googleUserData: UserData = {
           id: (session.user as any).id || 'google-user',
@@ -25,22 +62,18 @@ const Navigation: React.FC = () => {
           image: session.user.image || undefined,
           loginType: 'google'
         };
+        
         setUserData(googleUserData);
         setIsLoading(false);
         return;
       }
       
-      // Then check for custom auth cookie (standard login)
       const cookieUser = getAuthCookie();
       if (cookieUser) {
         setUserData(cookieUser);
-        setIsLoading(false);
-        return;
       }
       
-      // No authentication found
       if (status !== 'loading') {
-        setUserData(null);
         setIsLoading(false);
       }
     };
@@ -48,7 +81,6 @@ const Navigation: React.FC = () => {
     checkAuth();
 
     const handleStorageChange = () => {
-      // Only check cookie auth on storage change (not NextAuth)
       if (!session) {
         checkAuth();
       }
@@ -57,6 +89,27 @@ const Navigation: React.FC = () => {
     window.addEventListener('storage', handleStorageChange);
     return () => window.removeEventListener('storage', handleStorageChange);
   }, [session, status]);
+
+  useEffect(() => {
+    if (!userData || isLoading) return;
+
+    const initialValidation = async () => {
+      await validateUser(userData);
+    };
+    
+    const initialTimeout = setTimeout(initialValidation, 1000);
+
+    const validateInterval = setInterval(async () => {
+      if (userData && !isValidating) {
+        await validateUser(userData);
+      }
+    }, 5 * 60 * 1000); 
+
+    return () => {
+      clearTimeout(initialTimeout);
+      clearInterval(validateInterval);
+    };
+  }, [userData, isLoading]);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -70,6 +123,8 @@ const Navigation: React.FC = () => {
   }, []);
 
   const handleLogout = async () => {
+    if (isValidating) return; 
+    
     try {
       if (userData?.loginType === 'google') {
         await signOut({ redirect: false });
@@ -79,13 +134,13 @@ const Navigation: React.FC = () => {
           headers: { 'Content-Type': 'application/json' },
         });
       }
-     
+      
       removeAuthCookie();
       setUserData(null);
       setIsProfileMenuOpen(false);
-     
+      
       window.dispatchEvent(new Event('storage'));
-     
+      
       window.location.href = '/';
     } catch (error) {
       console.error('Logout error:', error);
@@ -95,12 +150,7 @@ const Navigation: React.FC = () => {
 
   const getProfileImage = (user: UserData | null): string => {
     if (!user) return '/defaultPFP.png';
-    
-    // Handle different image field names
-    if (user.image) {
-      return user.image;
-    }
-    
+    if (user.image) return user.image;
     return '/defaultPFP.png';
   };
 
@@ -120,7 +170,6 @@ const Navigation: React.FC = () => {
           alt="Profile"
           className="w-8 h-8 rounded-full object-cover border-2 border-gray-600"
           onError={(e) => {
-            // Fallback to default image if loading fails
             const target = e.target as HTMLImageElement;
             target.src = '/defaultPFP.png';
           }}
@@ -148,7 +197,7 @@ const Navigation: React.FC = () => {
           <button
             onClick={() => {
               setIsProfileMenuOpen(false);
-              // Add profile nav functionality here
+              // Navigate to profile page logic
             }}
             className="block w-full text-left px-4 py-2 text-sm text-gray-300 hover:bg-gray-700 hover:text-white"
           >
@@ -266,7 +315,7 @@ const Navigation: React.FC = () => {
               <Link href="#" className="text-gray-300 hover:text-white hover:bg-gray-700 block px-3 py-2 rounded-md text-base font-medium">
                 Magazine
               </Link>
-             
+              
               <div className="pt-4 pb-3 border-t border-gray-700">
                 <div className="space-y-1">
                   {isLoading ? (
@@ -291,7 +340,6 @@ const Navigation: React.FC = () => {
                       <button
                         onClick={() => {
                           setIsMenuOpen(false);
-                          // Add profile nav functionality here
                         }}
                         className="w-full text-left px-3 py-2 text-gray-300 hover:bg-gray-700 hover:text-white rounded-md text-sm font-medium"
                       >

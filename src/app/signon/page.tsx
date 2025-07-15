@@ -6,7 +6,7 @@ import { signOut } from 'next-auth/react';
 import Navigation from '../../components/NavBar';
 import SignupPopup from '../../components/SignupPopup';
 import { simpleGoogleSignIn } from '../../lib/googleAuth';
-import { getAuthCookie, removeAuthCookie, UserData } from '../../lib/authUtils';
+import { getAuthCookie, removeAuthCookie, UserData } from '../../lib/authUtils.client';
 
 interface CreateUserParams {
   fname: string;
@@ -14,7 +14,7 @@ interface CreateUserParams {
   email: string;
   password: string;
   phone: string;
-  city: string;
+  country: string;
 }
 
 const LoginPage: React.FC = () => {
@@ -122,10 +122,8 @@ const handleSubmit = async (e: React.FormEvent) => {
       removeAuthCookie();
       setUserData(null);
       
-      // Trigger storage event to update other tabs
       window.dispatchEvent(new Event('storage'));
       
-      // Stay on the same page to show login form
       
     } catch (error) {
       console.error('Logout error:', error);

@@ -1,8 +1,4 @@
 import { deleteCookie, getCookie, setCookie } from 'cookies-next';
-import { NextRequest, NextResponse } from 'next/server';
-import connectDB from './connectDB';
-import { GoogleUser } from '../models/googleUsers'; 
-import User from '../models/User';
 
 export interface UserData {
   id: string;
@@ -48,31 +44,40 @@ export const removeAuthCookie = (): void => {
 };
 
 /**
- * Validates if a user still exists in the database
- * @param userData - User data from cookie
- * @returns Promise<boolean> - true if user exists, false otherwise
+ * Checks if user is logged in (client-side only - doesn't validate with database)
+ * @returns boolean
  */
-export const validateUserExists = async (userData: UserData): Promise<boolean> => {
+export const isLoggedInSync = (): boolean => {
+  return getAuthCookie() !== null;
+};
+
+/**
+ * Validates user exists by making API call to server
+ * @returns Promise<boolean>
+ */
+export const validateUserExistsClient = async (): Promise<boolean> => {
   try {
-    await connectDB();
-   
-    let dbUser = null;
-   
-    if (userData.loginType === 'google') {
-      dbUser = await GoogleUser.findById(userData.id);
-    } else {
-      dbUser = await User.findById(userData.id);
+    const response = await fetch('/api/auth/validate', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+    
+    if (!response.ok) {
+      return false;
     }
-   
-    return dbUser !== null;
+    
+    const data = await response.json();
+    return data.valid === true;
   } catch (error) {
-    console.error('Error validating user existence:', error);
+    console.error('Error validating user on client:', error);
     return false;
   }
 };
 
 /**
- * Gets auth cookie and validates user still exists in database
+ * Gets auth cookie and validates user still exists via API call
  * If user doesn't exist, removes the cookie and returns null
  * @returns Promise<UserData | null>
  */
@@ -81,7 +86,7 @@ export const getValidatedAuthCookie = async (): Promise<UserData | null> => {
  
   if (!userData) return null;
  
-  const userExists = await validateUserExists(userData);
+  const userExists = await validateUserExistsClient();
  
   if (!userExists) {
     console.log('User no longer exists in database, removing auth cookie');
@@ -93,16 +98,12 @@ export const getValidatedAuthCookie = async (): Promise<UserData | null> => {
 };
 
 /**
- * Checks if user is logged in and account still exists
+ * Checks if user is logged in and account still exists (makes API call)
  * @returns Promise<boolean>
  */
 export const isLoggedIn = async (): Promise<boolean> => {
   const userData = await getValidatedAuthCookie();
   return userData !== null;
-};
-
-export const isLoggedInSync = (): boolean => {
-  return getAuthCookie() !== null;
 };
 
 export const getUserImage = (userData: UserData | null): string => {
