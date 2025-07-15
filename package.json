@@ -9,6 +9,7 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@next/env": "^15.3.5",
     "bcryptjs": "^3.0.2",
     "cookies-next": "^6.0.0",
     "lucide-react": "^0.511.0",

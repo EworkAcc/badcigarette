@@ -32,4 +32,7 @@ const GoogleUserSchema: Schema = new Schema({
   timestamps: true
 });
 
-export default mongoose.models.GoogleUser || mongoose.model<IGoogleUser>('GoogleUser', GoogleUserSchema, 'googleUsers');
+const GoogleUser = mongoose.models.GoogleUser || mongoose.model<IGoogleUser>('GoogleUser', GoogleUserSchema, 'googleUsers');
+
+export { GoogleUser };
+export default GoogleUser;

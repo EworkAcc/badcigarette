@@ -3,7 +3,7 @@ import Google from 'next-auth/providers/google';
 import { JWT } from 'next-auth/jwt';
 import { Session } from 'next-auth';
 import connectDB from './connectDB';
-import GoogleUser from '../models/googleUsers';
+import { GoogleUser } from '../models/googleUsers';
 
 export const authConfig: NextAuthOptions = {
   providers: [
@@ -98,35 +98,35 @@ export const authConfig: NextAuthOptions = {
   
   cookies: {
     sessionToken: {
-      name: process.env.NODE_ENV === 'production' 
+      name: process.env.NEXT_PUBLIC_ENV === 'production' 
         ? '__Secure-next-auth.session-token' 
         : 'next-auth.session-token',
       options: {
         httpOnly: true,
         sameSite: 'lax',
         path: '/',
-        secure: process.env.NODE_ENV === 'production', 
+        secure: process.env.NEXT_PUBLIC_ENV === 'production', 
       },
     },
     callbackUrl: {
-      name: process.env.NODE_ENV === 'production' 
+      name: process.env.NEXT_PUBLIC_ENV === 'production' 
         ? '__Secure-next-auth.callback-url' 
         : 'next-auth.callback-url',
       options: {
         sameSite: 'lax',
         path: '/',
-        secure: process.env.NODE_ENV === 'production', 
+        secure: process.env.NEXT_PUBLIC_ENV === 'production', 
       },
     },
     csrfToken: {
-      name: process.env.NODE_ENV === 'production' 
+      name: process.env.NEXT_PUBLIC_ENV === 'production' 
         ? '__Host-next-auth.csrf-token' 
         : 'next-auth.csrf-token',
       options: {
         httpOnly: true,
         sameSite: 'lax',
         path: '/',
-        secure: process.env.NODE_ENV === 'production', 
+        secure: process.env.NEXT_PUBLIC_ENV === 'production', 
       },
     },
     state: {
@@ -135,11 +135,11 @@ export const authConfig: NextAuthOptions = {
         httpOnly: true,
         sameSite: 'lax',
         path: '/',
-        secure: process.env.NODE_ENV === 'production', 
+        secure: process.env.NEXT_PUBLIC_ENV === 'production', 
         maxAge: 900, 
       },
     },
   },
   
-  debug: process.env.NODE_ENV === 'development',
+  debug: process.env.NEXT_PUBLIC_ENV === 'development',
 };
