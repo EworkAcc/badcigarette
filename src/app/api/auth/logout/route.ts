@@ -9,7 +9,7 @@ export async function POST(request: NextRequest) {
 
     response.cookies.set('auth_user', '', {
       httpOnly: false,
-      secure: process.env.NODE_ENV === 'production',
+      secure: process.env.NEXT_PUBLIC_ENV === 'production',
       sameSite: 'lax' as const,
       maxAge: 0, 
       path: '/',

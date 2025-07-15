@@ -60,7 +60,6 @@ const SignupPopup: React.FC<SignupPopupProps> = ({ isOpen, onClose, onSubmit }) 
     setIsLoading(true);
     setError('');
 
-    // Get values from refs as strings
     const userData = {
       fname: fnameRef.current?.value || '',
       lname: lnameRef.current?.value || '',

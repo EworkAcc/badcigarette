@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authConfig } from '../../../../lib/auth';
 import connectDB from '../../../../lib/connectDB';
-import GoogleUser from '../../../../models/googleUsers';
+import { GoogleUser } from '../../../../models/googleUsers';
 
 export async function POST(request: NextRequest) {
   try {
@@ -43,7 +43,7 @@ export async function POST(request: NextRequest) {
 
     const cookieOptions = {
       httpOnly: false,
-      secure: process.env.NODE_ENV === 'production',
+      secure: process.env.NEXT_PUBLIC_ENV === 'production',
       sameSite: 'lax' as const,
       maxAge: 30 * 24 * 60 * 60,
       path: '/',

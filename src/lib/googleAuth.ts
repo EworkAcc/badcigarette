@@ -13,7 +13,6 @@ interface GoogleSignInResult {
 }
 
 /**
- * Handles Google OAuth sign-in process for NextAuth
  * @param router - Next.js router instance for navigation
  * @param options - Sign-in options (optional)
  * @returns Promise with sign-in result
@@ -70,7 +69,6 @@ export const handleGoogleSignIn = async (
 };
 
 /**
- * Simplified function for Google sign-in with custom cookie integration
  * This integrates with your custom auth cookie system
  * @param callbackUrl - URL to redirect to after successful sign-in (optional)
  */
@@ -114,7 +112,6 @@ export const simpleGoogleSignIn = async (
 };
 
 /**
- * Handles Google sign-in with loading state management
  * @param setIsLoading - State setter for loading indicator
  * @param callbackUrl - Callback URL after sign-in
  */
@@ -134,8 +131,7 @@ export const handleGoogleSignInWithLoading = async (
   }
 };
 
-/**
- * React hook-style function for use in components
+/** 
  * @param setIsLoading - Loading state setter (optional)
  */
 export const useGoogleSignIn = (
