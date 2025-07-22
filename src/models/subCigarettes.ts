@@ -1,14 +1,16 @@
 import mongoose from 'mongoose';
-import cigPosts from './cigPosts';
+import { cigPostSchema } from './cigPosts';
+import generateUniqueId from '../lib/uniqueID';
 
-const subCigarette = new mongoose.Schema({
+export const subCigaretteSchema = new mongoose.Schema({
     name: { type: String, required: true, unique: true },
-    id: { type: String, required: true, unique: true },
-    posts: { type: [String], required: true },
+    id: { type: String, required: true, unique: true, default: () => generateUniqueId() },
+    posts: { type: [cigPostSchema], required: true },
     description: { type: String, required: true }, 
+    rating: { type: Number, required: true, default: 0 },
 }, {
     timestamps: true
 });
 
-const subCigarettes = mongoose.models.subCigarettes || mongoose.model('subCigarettes', subCigarette);
+const subCigarettes = mongoose.models.subCigarettes || mongoose.model('subCigarettes', subCigaretteSchema);
 export default subCigarettes;

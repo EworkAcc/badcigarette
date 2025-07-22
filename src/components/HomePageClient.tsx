@@ -1,5 +1,6 @@
 "use client";
 
+import Link from 'next/link';
 import React, { useState } from 'react';
 
 const HomePageClient: React.FC = () => {
@@ -130,9 +131,9 @@ const HomePageClient: React.FC = () => {
                   </div>
                 ))}
               </div>
-              <button className="mt-4 text-red-400 hover:text-red-300 text-sm font-medium">
+              <Link href = "/subCigarettes" className="mt-4 text-red-400 hover:text-red-300 text-sm font-medium">
                 Visit Forums →
-              </button>
+              </Link>
             </div>
           </div>
 

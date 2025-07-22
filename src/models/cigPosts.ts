@@ -1,18 +1,19 @@
 import mongoose from 'mongoose';
-import cigComments from './cigComments';
-import cigVotes from './cigVotes';
+import { cigCommentSchema } from './cigComments';
+import { cigVoteSchema } from './cigVotes';
 
-const cigPost = new mongoose.Schema({
+export const cigPostSchema = new mongoose.Schema({
     id: { type: Number, required: true, unique: true },
     title: { type: String, required: true },
     body: { type: String, required: true },
     subCigaretteId: { type: String, required: true },
-    comments: { type: [String]},
+    comments: { type: [cigCommentSchema], required: true },
     user: { type: String, required: true },
-    votes: { type: String, required: true }
+    votes: { type: cigVoteSchema, required: true },
+    rating: { type: Number, required: true, default: 0 }
 }, {
     timestamps: true 
 });
 
-const cigPosts = mongoose.models.cigPosts || mongoose.model('cigPosts', cigPost);
+const cigPosts = mongoose.models.cigPosts || mongoose.model('cigPosts', cigPostSchema);
 export default cigPosts;

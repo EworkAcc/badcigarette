@@ -24,7 +24,7 @@ const Navigation: React.FC = () => {
   
     try {
       setIsValidating(true);
-      const response = await fetch('/api/validateUser', {
+      const response = await fetch('/api/auth/validateUser', {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
@@ -252,7 +252,7 @@ const Navigation: React.FC = () => {
               <Link href="#" className="text-gray-300 hover:text-white hover:bg-gray-700 px-3 py-2 rounded-md text-sm font-medium">
                 Reviews
               </Link>
-              <Link href="#" className="text-gray-300 hover:text-white hover:bg-gray-700 px-3 py-2 rounded-md text-sm font-medium">
+              <Link href="/subCigarettes" className="text-gray-300 hover:text-white hover:bg-gray-700 px-3 py-2 rounded-md text-sm font-medium">
                 Forums
               </Link>
               <Link href="#" className="text-gray-300 hover:text-white hover:bg-gray-700 px-3 py-2 rounded-md text-sm font-medium">
