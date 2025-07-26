@@ -76,6 +76,7 @@ export const authConfig: NextAuthOptions = {
               user: {
                 ...session.user,
                 id: dbUser._id.toString(),
+                image: dbUser.image || session.user.image,
                 loginType: 'google'
               }
             };

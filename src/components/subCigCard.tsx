@@ -1,23 +1,28 @@
+import Link from 'next/link';
 import React from 'react';
 
 interface CigaretteCardProps {
   name: string;
   description: string;
+  id: string;
   rating?: number;
+  noOfReviews?: number;
   reviews?: number;
 }
 
 const CigaretteCard: React.FC<CigaretteCardProps> = ({ 
   name, 
   description, 
+  id,
   rating = 0, 
+  noOfReviews = 0,
   reviews = 0 
 }) => {
-  const displayRating = Math.max(0, Math.min(5, rating)); 
+  const displayRating = Math.max(0, Math.min(5, rating/noOfReviews || 0)); 
   
   return (
     <div className="bg-gray-800 rounded-lg p-6 hover:bg-gray-700 cursor-pointer transition-colors">
-      <h3 className="text-xl font-semibold mb-3 text-red-400">{name}</h3>
+      <Link href={`/subCigarettes/${id}`}className="text-xl font-semibold mb-3 text-red-400">{name}</Link>
       <p className="text-gray-300 mb-4 leading-relaxed">{description}</p>
       
       <div className="flex items-center justify-between">

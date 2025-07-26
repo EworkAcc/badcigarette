@@ -37,12 +37,31 @@ const Navigation: React.FC = () => {
         return false;
       }
       
+      if (response.status === 401) {
+        console.log('No auth cookie found, logging out');
+        await handleLogout();
+        return false;
+      }
+      
+      if (response.status === 400) {
+        console.log('Invalid cookie format, logging out');
+        await handleLogout();
+        return false;
+      }
+      
       if (!response.ok) {
         console.log('User validation failed due to server error, but not logging out');
         return false;
       }
     
       const data = await response.json();
+      
+      if (!data.valid) {
+        console.log('User validation returned invalid, logging out');
+        await handleLogout();
+        return false;
+      }
+      
       return data.valid;
     } catch (error) {
       console.error('Error validating user:', error);
@@ -94,14 +113,20 @@ const Navigation: React.FC = () => {
     if (!userData || isLoading) return;
 
     const initialValidation = async () => {
-      await validateUser(userData);
+      const isValid = await validateUser(userData);
+      if (!isValid && !getAuthCookie()) {
+        setUserData(null);
+      }
     };
     
     const initialTimeout = setTimeout(initialValidation, 1000);
 
     const validateInterval = setInterval(async () => {
       if (userData && !isValidating) {
-        await validateUser(userData);
+        const isValid = await validateUser(userData);
+        if (!isValid && !getAuthCookie()) {
+          setUserData(null);
+        }
       }
     }, 5 * 60 * 1000); 
 
@@ -144,19 +169,12 @@ const Navigation: React.FC = () => {
       window.location.href = '/';
     } catch (error) {
       console.error('Logout error:', error);
-      alert('Failed to log out. Please try again.');
+      removeAuthCookie();
+      setUserData(null);
+      setIsProfileMenuOpen(false);
+      window.dispatchEvent(new Event('storage'));
+      window.location.href = '/';
     }
-  };
-
-  const getProfileImage = (user: UserData | null): string => {
-    if (!user) return '/defaultPFP.png';
-    if (user.image) return user.image;
-    return '/defaultPFP.png';
-  };
-
-  const getDisplayName = (user: UserData | null): string => {
-    if (!user) return 'Guest';
-    return user.name || 'User';
   };
 
   const ProfileMenu = () => (
@@ -166,7 +184,7 @@ const Navigation: React.FC = () => {
         className="flex items-center space-x-2 text-gray-300 hover:text-white p-2 rounded-md"
       >
         <img
-          src={getProfileImage(userData)}
+          src={getUserImage(userData)}
           alt="Profile"
           className="w-8 h-8 rounded-full object-cover border-2 border-gray-600"
           onError={(e) => {
@@ -174,7 +192,7 @@ const Navigation: React.FC = () => {
             target.src = '/defaultPFP.png';
           }}
         />
-        <span className="hidden sm:block text-sm">{getDisplayName(userData)}</span>
+        <span className="hidden sm:block text-sm">{getUserDisplayName(userData)}</span>
         <svg
           className={`w-4 h-4 transition-transform ${isProfileMenuOpen ? 'rotate-180' : ''}`}
           fill="none"
@@ -188,7 +206,7 @@ const Navigation: React.FC = () => {
       {isProfileMenuOpen && (
         <div className="absolute right-0 mt-2 w-48 bg-gray-800 rounded-md shadow-lg py-1 z-50 border border-gray-700">
           <div className="px-4 py-2 text-sm text-gray-400 border-b border-gray-700">
-            <div className="font-medium text-white">{getDisplayName(userData)}</div>
+            <div className="font-medium text-white">{getUserDisplayName(userData)}</div>
             <div className="text-xs">{userData?.email}</div>
             <div className="text-xs mt-1">
               {userData?.loginType === 'google' ? 'Google Account' : 'Standard Account'}
@@ -285,7 +303,13 @@ const Navigation: React.FC = () => {
               className="text-gray-400 hover:text-white hover:bg-gray-700 p-2 rounded-md"
             >
               <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                <path 
+                  strokeLinecap="round" 
+                  strokeLinejoin="round" 
+                  strokeWidth={2} 
+                  d={isMenuOpen ? "M6 18L18 6M6 6l12 12" : "M4 6h16M4 12h16M4 18h16"}
+                  className="transition-all duration-300 ease-in-out"
+                />
               </svg>
             </button>
           </div>
@@ -297,7 +321,7 @@ const Navigation: React.FC = () => {
               <Link href="./" className="text-gray-300 hover:text-white hover:bg-gray-700 block px-3 py-2 rounded-md text-base font-medium">
                 Home
               </Link>
-              <Link href="#" className="text-gray-300 hover:text-white hover:bg-gray-700 block px-3 py-2 rounded-md text-base font-medium">
+              <Link href="/subCigarettes" className="text-gray-300 hover:text-white hover:bg-gray-700 block px-3 py-2 rounded-md text-base font-medium">
                 Cigarettes
               </Link>
               <Link href="#" className="text-gray-300 hover:text-white hover:bg-gray-700 block px-3 py-2 rounded-md text-base font-medium">
@@ -324,7 +348,7 @@ const Navigation: React.FC = () => {
                     <div className="space-y-2">
                       <div className="flex items-center space-x-3 px-3 py-2">
                         <img
-                          src={getProfileImage(userData)}
+                          src={getUserImage(userData)}
                           alt="Profile"
                           className="w-8 h-8 rounded-full object-cover border-2 border-gray-600"
                           onError={(e) => {
@@ -333,7 +357,7 @@ const Navigation: React.FC = () => {
                           }}
                         />
                         <div>
-                          <div className="text-white text-sm font-medium">{getDisplayName(userData)}</div>
+                          <div className="text-white text-sm font-medium">{getUserDisplayName(userData)}</div>
                           <div className="text-gray-400 text-xs">{userData.email}</div>
                         </div>
                       </div>

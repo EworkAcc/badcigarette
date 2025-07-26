@@ -24,7 +24,7 @@ const AddCigaretteForm: React.FC = () => {
     setMessageType('');
 
     try {
-      const response = await fetch('/api/auth/addSubCig', {
+      const response = await fetch('/api/addSubCig', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

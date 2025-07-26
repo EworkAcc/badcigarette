@@ -1,8 +1,9 @@
 import mongoose from 'mongoose';
 import { cigVoteSchema } from './cigVotes';
+import generateUniqueId from '../lib/uniqueID';
 
 export const cigCommentSchema = new mongoose.Schema({
-    id: { type: String, required: true, unique: true },
+    id: { type: String, required: true, unique: true, default: () => generateUniqueId() },
     body: { type: String, required: true },
     user: { type: String, required: true },
     postId: { type: String, required: true },

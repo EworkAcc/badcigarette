@@ -10,24 +10,10 @@ export interface IGoogleUser extends Document {
 }
 
 const GoogleUserSchema: Schema = new Schema({
-  googleId: {
-    type: String,
-    required: true,
-    unique: true
-  },
-  email: {
-    type: String,
-    required: true,
-    unique: true
-  },
-  name: {
-    type: String,
-    required: true
-  },
-  image: {
-    type: String,
-    default: null
-  }
+  googleId: { type: String, required: true, unique: true },
+  email: { type: String, required: true, unique: true },
+  name: { type: String, required: true },
+  image: { type: String, default: null }
 }, {
   timestamps: true
 });

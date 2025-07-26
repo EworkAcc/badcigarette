@@ -84,7 +84,7 @@ export const simpleGoogleSignIn = async (
     if (result?.ok) {
       await new Promise(resolve => setTimeout(resolve, 1000));
       
-      const response = await fetch('/api/auth/google-cookie', {
+      const response = await fetch('/api/auth/googleCookie', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

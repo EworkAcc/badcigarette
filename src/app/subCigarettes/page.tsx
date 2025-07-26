@@ -1,8 +1,8 @@
 import React from 'react';
 import connectDB from '../../lib/connectDB';
 import subCigarettes from '../../models/subCigarettes';
-import CigaretteCard from '../../components/subCigCard';
-import AddCigaretteForm from '../../components/addSubCig';
+import CigaretteCard from '../../components/SubCigCard';
+import AddCigaretteForm from '../../components/AddSubCig';
 import Navigation from '@/components/NavBar';
 
 interface SubCigarette {
@@ -10,6 +10,7 @@ interface SubCigarette {
   name: string;
   description: string;
   rating: number;
+  noOfReviews: number;
   posts: any[];
 }
 
@@ -33,6 +34,7 @@ async function getTopCigarettes(): Promise<SubCigarette[]> {
       name: cig.name,
       description: cig.description,
       rating: cig.rating || 0,
+      noOfReviews: cig.noOfReviews || 0,
       posts: cig.posts || []
     }));
   } catch (error) {
@@ -82,7 +84,9 @@ const TopCigarettesPage: React.FC = async () => {
                 <CigaretteCard
                   name={cigarette.name}
                   description={cigarette.description}
+                  id={cigarette.id}
                   rating={cigarette.rating}
+                  noOfReviews={cigarette.noOfReviews}
                   reviews={cigarette.posts.length}
                 />
               </div>

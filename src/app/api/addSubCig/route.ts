@@ -1,13 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
-import connectDB from '../../../../lib/connectDB';
-import subCigarettes from '../../../../models/subCigarettes';
-import generateUniqueId from '../../../../lib/uniqueID';
+import connectDB from '../../../lib/connectDB';
+import subCigarettes from '../../../models/subCigarettes';
+import generateUniqueId from '../../../lib/uniqueID';
 
 export async function POST(request: NextRequest) {
   try {
-    const { name, id, posts, description, rating } = await request.json();
+    const { name, id, posts, description, rating, noOfReviews } = await request.json();
 
-    if (!name || !id || !posts || !description || rating === undefined) {
+    if (!name || !id || !posts || !description || !rating || !noOfReviews  === undefined) {
       return NextResponse.json(
         { message: 'All fields are required' },
         { status: 400 }
@@ -37,7 +37,7 @@ export async function POST(request: NextRequest) {
     const newSubCig = new subCigarettes({
       name,
       id,
-      posts,
+      ...(posts && posts.length > 0 ? { posts } : {}),
       description,
       rating
     });
