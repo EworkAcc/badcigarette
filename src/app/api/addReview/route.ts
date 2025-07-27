@@ -1,16 +1,22 @@
 import { NextRequest, NextResponse } from 'next/server';
 import connectDB from '../../../lib/connectDB';
 import subCigarettes from '../../../models/subCigarettes';
-
-const generateNumericId = () => Math.floor(Math.random() * 1000000000);
+import generateUniqueId from '@/lib/uniqueID';
 
 export async function POST(request: NextRequest) {
   try {
-    const { subCigaretteId, rating, reviewText, user, userImage } = await request.json();
+    const { subCigaretteId, rating, reviewText, title, user, userImage, userEmail } = await request.json();
 
-    if (!subCigaretteId || !reviewText || !user) {
+    if (!subCigaretteId || !reviewText || !user || !title) {
       return NextResponse.json(
-        { message: 'SubCigarette ID, review text, and user are required' },
+        { message: 'SubCigarette ID, review text, title, and user are required' },
+        { status: 400 }
+      );
+    }
+
+    if (!userEmail) {
+      return NextResponse.json(
+        { message: 'User email is required for authentication' },
         { status: 400 }
       );
     }
@@ -26,18 +32,20 @@ export async function POST(request: NextRequest) {
     }
 
     const newPost = {
-      id: generateNumericId(), 
-      title: `Review by ${user}`,
+      id: generateUniqueId(), 
+      title: title,
       body: reviewText,
       subCigaretteId: subCigaretteId,
       comments: [],
-      user: user,
-      userImage: userImage || null,
+      user: user, 
+      userEmail: userEmail, 
+      userImage: userImage || '/defaultPFP.png',
       votes: {
-        isUpvote: false, 
-        user: user,
-        upvotes: 0,
-        downvotes: 0
+        id: generateUniqueId(),
+        noOfUpvotes: 0,
+        noOfDownvotes: 0,
+        userUp: [],
+        userDown: []
       },
       rating: rating || 0,
       createdAt: new Date(),

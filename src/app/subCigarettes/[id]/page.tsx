@@ -4,6 +4,7 @@ import connectDB from '../../../lib/connectDB';
 import subCigarettes from '../../../models/subCigarettes';
 import Navigation from '../../../components/NavBar';
 import ClientSideWrapper from '../../../components/ClientSideWrapper';
+import CigarettePostsList from '../../../components/CigPostList';
 
 interface SubCigarette {
   id: string;
@@ -32,6 +33,36 @@ async function getCigaretteById(id: string): Promise<SubCigarette | null> {
     if (!cigarette) {
       return null;
     }
+
+    const serializedPosts = (cigarette.posts || []).map((post: any) => ({
+      id: post.id || post._id?.toString(),
+      title: post.title || 'Untitled Review',
+      body: post.body || '',
+      user: post.user || 'Anonymous',
+      userImage: post.userImage || '/defaultPFP.png',
+      rating: post.rating || 0,
+      createdAt: post.createdAt ? post.createdAt.toISOString() : new Date().toISOString(),
+      updatedAt: post.updatedAt ? post.updatedAt.toISOString() : new Date().toISOString(),
+      votes: post.votes ? {
+        id: post.votes.id || post.votes._id?.toString(),
+        noOfUpvotes: post.votes.noOfUpvotes || 0,
+        noOfDownvotes: post.votes.noOfDownvotes || 0,
+        userUp: post.votes.userUp || [],
+        userDown: post.votes.userDown || []
+      } : {
+        id: '',
+        noOfUpvotes: post.upvotes || 0,
+        noOfDownvotes: post.downvotes || 0,
+        userUp: [],
+        userDown: []
+      },
+      comments: (post.comments || []).map((comment: any) => ({
+        id: comment.id || comment._id?.toString(),
+        body: comment.body || '',
+        user: comment.user || 'Anonymous',
+        createdAt: comment.createdAt ? comment.createdAt.toISOString() : new Date().toISOString()
+      }))
+    }));
    
     return {
       id: cigarette.id || cigarette._id?.toString(),
@@ -39,7 +70,7 @@ async function getCigaretteById(id: string): Promise<SubCigarette | null> {
       description: cigarette.description,
       rating: cigarette.rating || 0,
       noOfReviews: cigarette.noOfReviews || 0,
-      posts: cigarette.posts || []
+      posts: serializedPosts
     };
   } catch (error) {
     console.error('Error fetching cigarette:', error);
@@ -99,70 +130,7 @@ const CigarettePage: React.FC<PageProps> = async ({ params }) => {
             <h2 className="text-2xl font-semibold mb-4 text-red-400">
               Reviews ({cigarette.posts.length})
             </h2>
-            {cigarette.posts.length === 0 ? (
-              <div className="text-center py-8">
-                <p className="text-gray-400">No reviews yet.</p>
-                <p className="text-gray-500 text-sm mt-2">
-                  Be the first to leave a review!
-                </p>
-              </div>
-            ) : (
-              <div className="space-y-4">
-                {cigarette.posts.map((post: any, index: number) => (
-                  <div key={index} className="bg-gray-700 rounded-lg p-4">
-                    <div className="flex items-start space-x-3">
-                      {post.userImage && (
-                        <img 
-                          src={post.userImage} 
-                          alt={post.user || 'User'}
-                          className="w-10 h-10 rounded-full"
-                        />
-                      )}
-                      <div className="flex-1">
-                        <div className="flex items-center space-x-2 mb-2">
-                          <span className="text-white font-medium">{post.user || 'Anonymous'}</span>
-                          <div className="flex items-center">
-                            {[...Array(5)].map((_, starIndex) => (
-                              <span
-                                key={starIndex}
-                                className={`text-sm ${
-                                  starIndex < (post.rating || 0) 
-                                    ? 'text-yellow-400' 
-                                    : 'text-gray-500'
-                                }`}
-                              >
-                                ★
-                              </span>
-                            ))}
-                          </div>
-                        </div>
-                        <p className="text-gray-300">{post.body || post.content || 'No review content'}</p>
-                        <div className="mt-2 text-sm text-gray-400">
-                          {post.createdAt ? new Date(post.createdAt).toLocaleDateString() : 'Recently'}
-                        </div>
-                        
-                        <div className="flex items-center space-x-4 mt-3">
-                          <div className="flex items-center space-x-1">
-                            <button className="text-gray-400 hover:text-green-400 transition-colors">
-                              ↑
-                            </button>
-                            <span className="text-sm text-gray-300">
-                              {(post.upvotes || 0) - (post.downvotes || 0)}
-                            </span>
-                            <button className="text-gray-400 hover:text-red-400 transition-colors">
-                              ↓
-                            </button>
-                          </div>
-                          <button className="text-gray-400 hover:text-blue-400 text-sm transition-colors">
-                            💬 {post.comments?.length || 0} comments
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
+            <CigarettePostsList posts={cigarette.posts} />
           </div>
         </div>
 

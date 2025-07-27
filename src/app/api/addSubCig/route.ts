@@ -5,11 +5,11 @@ import generateUniqueId from '../../../lib/uniqueID';
 
 export async function POST(request: NextRequest) {
   try {
-    const { name, id, posts, description, rating, noOfReviews } = await request.json();
+    const { name, id, posts, description, rating } = await request.json();
 
-    if (!name || !id || !posts || !description || !rating || !noOfReviews  === undefined) {
+    if (!name || !id || !description || rating === undefined) {
       return NextResponse.json(
-        { message: 'All fields are required' },
+        { message: 'Name, id, description, and rating are required' },
         { status: 400 }
       );
     }
@@ -35,11 +35,12 @@ export async function POST(request: NextRequest) {
     }
 
     const newSubCig = new subCigarettes({
-      name,
+      name: name.trim(),
       id,
-      ...(posts && posts.length > 0 ? { posts } : {}),
-      description,
-      rating
+      posts: posts || [], 
+      description: description.trim(),
+      rating,
+      noOfReviews: 0 
     });
 
     const savedSubCig = await newSubCig.save();

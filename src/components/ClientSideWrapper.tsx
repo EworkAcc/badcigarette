@@ -94,9 +94,14 @@ const ClientSideWrapper: React.FC<ClientSideWrapperProps> = ({ cigaretteId }) =>
     setShowReviewPopup(true);
   };
 
-  const handleReviewSubmit = async (rating: number, reviewText: string) => {
+  const handleReviewSubmit = async (rating: number, reviewText: string, title: string) => {
     if (!userData) {
       alert('Please log in to submit a review');
+      return;
+    }
+
+    if (!title.trim()) {
+      alert('Please provide a title for your review');
       return;
     }
 
@@ -177,7 +182,9 @@ const ClientSideWrapper: React.FC<ClientSideWrapperProps> = ({ cigaretteId }) =>
           subCigaretteId: cigaretteId,
           rating,
           reviewText,
+          title,
           user: userData.name,
+          userEmail: userData.email,
           userImage: getUserImage(userData)
         })
       });

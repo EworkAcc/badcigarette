@@ -3,6 +3,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { signOut, useSession } from 'next-auth/react';
 import { getAuthCookie, getUserImage, getUserDisplayName, removeAuthCookie, UserData } from '../lib/authUtils.client';
+import { useRouter } from 'next/navigation';
 
 const Navigation: React.FC = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -10,9 +11,38 @@ const Navigation: React.FC = () => {
   const [userData, setUserData] = useState<UserData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isValidating, setIsValidating] = useState(false);
+  const [isLoadingRandom, setIsLoadingRandom] = useState(false);
   const profileMenuRef = useRef<HTMLDivElement>(null);
+  const router = useRouter();
   
   const { data: session, status } = useSession();
+
+  const handleRandomCigarette = async () => {
+    if (isLoadingRandom) return;
+    
+    setIsLoadingRandom(true);
+    
+    try {
+      const response = await fetch('/api/randomCigarette');
+      
+      if (response.ok) {
+        const data = await response.json();
+        if (data.cigarette && data.cigarette.id) {
+          router.push(`/subCigarettes/${data.cigarette.id}`);
+        } else {
+          alert('No cigarettes available');
+        }
+      } else {
+        const errorData = await response.json();
+        alert(errorData.message || 'Failed to find random cigarette');
+      }
+    } catch (error) {
+      console.error('Error getting random cigarette:', error);
+      alert('Failed to get random cigarette. Please try again.');
+    } finally {
+      setIsLoadingRandom(false);
+    }
+  };
 
   const validateUser = async (user: UserData) => {
     if (isValidating) return true;
@@ -215,7 +245,6 @@ const Navigation: React.FC = () => {
           <button
             onClick={() => {
               setIsProfileMenuOpen(false);
-              // Navigate to profile page logic
             }}
             className="block w-full text-left px-4 py-2 text-sm text-gray-300 hover:bg-gray-700 hover:text-white"
           >
@@ -250,7 +279,7 @@ const Navigation: React.FC = () => {
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
-          <Link href="./" className="flex items-center">
+          <Link href="/" className="flex items-center">
             <div className="flex-shrink-0 flex items-center">
               <div className="text-white">
                 <h1 className="text-2xl font-bold text-red-500">Bad Cigarettes</h1>
@@ -261,15 +290,18 @@ const Navigation: React.FC = () => {
 
           <div className="hidden md:block">
             <div className="ml-10 flex items-baseline space-x-4">
-              <Link href="./" className="text-gray-300 hover:text-white hover:bg-gray-700 px-3 py-2 rounded-md text-sm font-medium">
+              <Link href="/" className="text-gray-300 hover:text-white hover:bg-gray-700 px-3 py-2 rounded-md text-sm font-medium">
                 Home
               </Link>
-              <Link href="#" className="text-gray-300 hover:text-white hover:bg-gray-700 px-3 py-2 rounded-md text-sm font-medium">
-                Cigarettes
-              </Link>
-              <Link href="#" className="text-gray-300 hover:text-white hover:bg-gray-700 px-3 py-2 rounded-md text-sm font-medium">
-                Reviews
-              </Link>
+              <button 
+                onClick={handleRandomCigarette}
+                disabled={isLoadingRandom}
+                className={`text-gray-300 hover:text-white hover:bg-gray-700 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                  isLoadingRandom ? 'opacity-50 cursor-not-allowed' : ''
+                }`}
+              >
+                {isLoadingRandom ? 'Loading...' : 'Random Cigarette'}
+              </button>
               <Link href="/subCigarettes" className="text-gray-300 hover:text-white hover:bg-gray-700 px-3 py-2 rounded-md text-sm font-medium">
                 Forums
               </Link>
@@ -291,7 +323,7 @@ const Navigation: React.FC = () => {
             ) : userData ? (
               <ProfileMenu />
             ) : (
-              <Link href="../signon" className="bg-red-600 hover:bg-red-700 text-white px-8 py-2 rounded-md text-sm font-medium">
+              <Link href="/signon" className="bg-red-600 hover:bg-red-700 text-white px-8 py-2 rounded-md text-sm font-medium">
                 Sign On
               </Link>
             )}
@@ -321,6 +353,18 @@ const Navigation: React.FC = () => {
               <Link href="./" className="text-gray-300 hover:text-white hover:bg-gray-700 block px-3 py-2 rounded-md text-base font-medium">
                 Home
               </Link>
+              <button
+                onClick={() => {
+                  setIsMenuOpen(false);
+                  handleRandomCigarette();
+                }}
+                disabled={isLoadingRandom}
+                className={`w-full text-left text-gray-300 hover:text-white hover:bg-gray-700 block px-3 py-2 rounded-md text-base font-medium ${
+                  isLoadingRandom ? 'opacity-50 cursor-not-allowed' : ''
+                }`}
+              >
+                {isLoadingRandom ? 'Loading...' : 'Random Cigarette'}
+              </button>
               <Link href="/subCigarettes" className="text-gray-300 hover:text-white hover:bg-gray-700 block px-3 py-2 rounded-md text-base font-medium">
                 Cigarettes
               </Link>
@@ -380,7 +424,7 @@ const Navigation: React.FC = () => {
                       </button>
                     </div>
                   ) : (
-                    <Link href="../signon" className="w-full bg-red-600 hover:bg-red-700 text-white px-8 py-2 rounded-md text-sm font-medium block text-center">
+                    <Link href="/signon" className="w-full bg-red-600 hover:bg-red-700 text-white px-8 py-2 rounded-md text-sm font-medium block text-center">
                       Sign On
                     </Link>
                   )}
