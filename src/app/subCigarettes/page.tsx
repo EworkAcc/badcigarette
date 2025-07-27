@@ -1,8 +1,8 @@
 import React from 'react';
 import connectDB from '../../lib/connectDB';
 import subCigarettes from '../../models/subCigarettes';
-import CigaretteCard from '../../components/SubCigCard';
-import AddCigaretteForm from '../../components/AddSubCig';
+import CigaretteCard from '@/components/SubCigCard';
+import AddCigaretteForm from '@/components/AddSubCig';
 import Navigation from '@/components/NavBar';
 
 interface SubCigarette {
