@@ -1,6 +1,6 @@
 import mongoose from 'mongoose';
 import { cigPostSchema } from './cigPosts';
-import generateUniqueId from '../lib/uniqueID';
+import generateUniqueId from '@/lib/uniqueID';
 
 export const subCigaretteSchema = new mongoose.Schema({
     name: { type: String, required: true, unique: true },

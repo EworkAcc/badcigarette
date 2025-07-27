@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { getAuthCookie } from '../lib/authUtils.client';
+import { getAuthCookie } from '@/lib/authUtils.client';
 
 interface CigarettePostProps {
   post: {

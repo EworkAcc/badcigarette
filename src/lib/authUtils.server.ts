@@ -1,6 +1,6 @@
 import connectDB from './connectDB';
-import { GoogleUser } from '../models/googleUsers';
-import User from '../models/User';
+import { GoogleUser } from '@/models/googleUsers';
+import User from '@/models/User';
 
 export interface UserData {
   id: string;

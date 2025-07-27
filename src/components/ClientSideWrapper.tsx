@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react';
-import { getAuthCookie, getUserImage, getUserDisplayName, UserData, setAuthCookie } from '../lib/authUtils.client';
+import { getAuthCookie, getUserImage, getUserDisplayName, UserData, setAuthCookie } from '@/lib/authUtils.client';
 import ReviewPopup from './ReviewPopUp';
 
 interface ClientSideWrapperProps {

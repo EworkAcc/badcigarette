@@ -2,7 +2,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { signOut, useSession } from 'next-auth/react';
-import { getAuthCookie, getUserImage, getUserDisplayName, removeAuthCookie, UserData } from '../lib/authUtils.client';
+import { getAuthCookie, getUserImage, getUserDisplayName, removeAuthCookie, UserData } from '@/lib/authUtils.client';
 import { useRouter } from 'next/navigation';
 
 const Navigation: React.FC = () => {

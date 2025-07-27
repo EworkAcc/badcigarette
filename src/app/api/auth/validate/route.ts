@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
-import { validateUserExists } from '../../../../lib/authUtils.server';
-import { UserData } from '../../../../lib/authUtils.client';
+import { validateUserExists } from '@/lib/authUtils.server';
+import { UserData } from '@/lib/authUtils.client';
 
 export async function POST(request: NextRequest) {
   try {

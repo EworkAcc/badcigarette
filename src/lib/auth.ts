@@ -3,7 +3,7 @@ import Google from 'next-auth/providers/google';
 import { JWT } from 'next-auth/jwt';
 import { Session } from 'next-auth';
 import connectDB from './connectDB';
-import { GoogleUser } from '../models/googleUsers';
+import { GoogleUser } from '@/models/googleUsers';
 
 export const authConfig: NextAuthOptions = {
   secret: process.env.NEXTAUTH_SECRET,

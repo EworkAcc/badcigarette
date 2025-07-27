@@ -1,7 +1,7 @@
 import React from 'react';
-import Navigation from '../components/NavBar';
-import HomePageClient from '../components/HomePageClient'; 
-import { dbConnect } from "../../utils/dbConnect/dbConnect";
+import Navigation from '@/components/NavBar';
+import HomePageClient from '@/components/HomePageClient'; 
+import { dbConnect } from '../../utils/dbConnect/dbConnect';
 
 const HomePage: React.FC = async () => {
   const connection = await dbConnect();

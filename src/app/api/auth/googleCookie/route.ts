@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
-import { authConfig } from '../../../../lib/auth';
-import connectDB from '../../../../lib/connectDB';
-import { GoogleUser } from '../../../../models/googleUsers';
+import { authConfig } from '@/lib/auth';
+import connectDB from '@/lib/connectDB';
+import { GoogleUser } from '@/models/googleUsers';
 
 export async function POST(request: NextRequest) {
   try {

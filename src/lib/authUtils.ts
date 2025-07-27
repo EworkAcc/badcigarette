@@ -1,8 +1,8 @@
 import { deleteCookie, getCookie, setCookie } from 'cookies-next';
 import { NextRequest, NextResponse } from 'next/server';
 import connectDB from './connectDB';
-import { GoogleUser } from '../models/googleUsers'; 
-import User from '../models/User';
+import { GoogleUser } from '@/models/googleUsers'; 
+import User from '@/models/User';
 
 export interface UserData {
   id: string;

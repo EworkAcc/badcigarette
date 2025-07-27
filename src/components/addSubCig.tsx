@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from 'react';
-import generateUniqueId from '../lib/uniqueID';
+import generateUniqueId from '@/lib/uniqueID';
 
 const AddCigaretteForm: React.FC = () => {
   const [name, setName] = useState('');

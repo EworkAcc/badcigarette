@@ -1,7 +1,7 @@
 import mongoose from 'mongoose';
 import { cigCommentSchema } from './cigComments';
 import { cigVoteSchema } from './cigVotes';
-import generateUniqueId from '../lib/uniqueID';
+import generateUniqueId from '@/lib/uniqueID';
 
 export const cigPostSchema = new mongoose.Schema({
     id: { type: String, required: true, default: () => generateUniqueId() },

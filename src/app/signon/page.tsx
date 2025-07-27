@@ -3,10 +3,10 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { signOut } from 'next-auth/react';
-import Navigation from '../../components/NavBar';
-import SignupPopup from '../../components/SignupPopup';
-import { simpleGoogleSignIn } from '../../lib/googleAuth';
-import { getAuthCookie, removeAuthCookie, UserData } from '../../lib/authUtils.client';
+import Navigation from '@/components/NavBar';
+import SignupPopup from '@/components/SignupPopup';
+import { simpleGoogleSignIn } from '@/lib/googleAuth';
+import { getAuthCookie, removeAuthCookie, UserData } from '@/lib/authUtils.client';
 
 interface CreateUserParams {
   fname: string;

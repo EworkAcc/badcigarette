@@ -1,10 +1,10 @@
 import React from 'react';
 import { notFound } from 'next/navigation';
-import connectDB from '../../../lib/connectDB';
-import subCigarettes from '../../../models/subCigarettes';
-import Navigation from '../../../components/NavBar';
-import ClientSideWrapper from '../../../components/ClientSideWrapper';
-import CigarettePostsList from '../../../components/CigPostList';
+import connectDB from '@/lib/connectDB';
+import subCigarettes from '@/models/subCigarettes';
+import Navigation from '@/components/NavBar';
+import ClientSideWrapper from '@/components/ClientSideWrapper';
+import CigarettePostsList from '@/components/CigPostList';
 
 interface SubCigarette {
   id: string;

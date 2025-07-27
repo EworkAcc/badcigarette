@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { UserData } from '../lib/authUtils.client';
+import { UserData } from '@/lib/authUtils.client';
 
 interface ReviewPopupProps {
   onClose: () => void;

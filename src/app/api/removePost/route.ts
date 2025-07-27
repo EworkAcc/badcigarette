@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
-import connectDB from '../../../lib/connectDB';
-import subCigarettes from '../../../models/subCigarettes';
-import GoogleUser from '../../../models/googleUsers';
-import User from '../../../models/User';
+import connectDB from '@/lib/connectDB';
+import subCigarettes from '@/models/subCigarettes';
+import GoogleUser from '@/models/googleUsers';
+import User from '@/models/User';
 
 export async function DELETE(request: NextRequest) {
   try {
