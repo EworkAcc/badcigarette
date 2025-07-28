@@ -43,31 +43,37 @@ export const removeAuthCookie = (): void => {
   deleteCookie(AUTH_COOKIE_NAME, { path: '/' });
 };
 
-/**
- * Checks if user is logged in (client-side only - doesn't validate with database)
- * @returns boolean
- */
 export const isLoggedInSync = (): boolean => {
   return getAuthCookie() !== null;
 };
 
-/**
- * Validates user exists by making API call to server
- * @returns Promise<boolean>
- */
 export const validateUserExistsClient = async (): Promise<boolean> => {
   try {
-    const response = await fetch('/api/auth/validate', {
-      method: 'POST',
+    const response = await fetch('/api/auth/validateUser', {
+      method: 'GET',
       headers: {
         'Content-Type': 'application/json',
       },
     });
+   
+    if (response.status === 404) {
+      removeAuthCookie();
+      return false;
+    }
+    
+    if (response.status === 401) {
+      return false;
+    }
+    
+    if (response.status === 400) {
+      removeAuthCookie();
+      return false;
+    }
     
     if (!response.ok) {
       return false;
     }
-    
+   
     const data = await response.json();
     return data.valid === true;
   } catch (error) {
@@ -76,11 +82,6 @@ export const validateUserExistsClient = async (): Promise<boolean> => {
   }
 };
 
-/**
- * Gets auth cookie and validates user still exists via API call
- * If user doesn't exist, removes the cookie and returns null
- * @returns Promise<UserData | null>
- */
 export const getValidatedAuthCookie = async (): Promise<UserData | null> => {
   const userData = getAuthCookie();
  
@@ -97,10 +98,6 @@ export const getValidatedAuthCookie = async (): Promise<UserData | null> => {
   return userData;
 };
 
-/**
- * Checks if user is logged in and account still exists (makes API call)
- * @returns Promise<boolean>
- */
 export const isLoggedIn = async (): Promise<boolean> => {
   const userData = await getValidatedAuthCookie();
   return userData !== null;

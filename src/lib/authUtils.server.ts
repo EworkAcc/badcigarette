@@ -10,11 +10,6 @@ export interface UserData {
   loginType: 'standard' | 'google';
 }
 
-/**
- * Validates if a user still exists in the database (SERVER-SIDE ONLY)
- * @param userData - User data from cookie
- * @returns Promise<boolean> - true if user exists, false otherwise
- */
 export const validateUserExists = async (userData: UserData): Promise<boolean> => {
   try {
     await connectDB();
@@ -22,14 +17,73 @@ export const validateUserExists = async (userData: UserData): Promise<boolean> =
     let dbUser = null;
    
     if (userData.loginType === 'google') {
-      dbUser = await GoogleUser.findById(userData.id);
+      dbUser = await GoogleUser.findOne({
+        $or: [
+          { _id: userData.id },
+          { email: userData.email }
+        ]
+      });
     } else {
-      dbUser = await User.findById(userData.id);
+      dbUser = await User.findOne({
+        $or: [
+          { _id: userData.id },
+          { email: userData.email }
+        ]
+      });
     }
    
     return dbUser !== null;
   } catch (error) {
     console.error('Error validating user existence:', error);
-    return false;
+    throw error;
+  }
+};
+
+export const getFreshUserData = async (userData: UserData): Promise<UserData | null> => {
+  try {
+    await connectDB();
+   
+    let dbUser = null;
+   
+    if (userData.loginType === 'google') {
+      dbUser = await GoogleUser.findOne({
+        $or: [
+          { _id: userData.id },
+          { email: userData.email }
+        ]
+      });
+      
+      if (dbUser) {
+        return {
+          id: dbUser._id.toString(),
+          name: dbUser.name,
+          email: dbUser.email,
+          image: dbUser.image || undefined,
+          loginType: 'google'
+        };
+      }
+    } else {
+      dbUser = await User.findOne({
+        $or: [
+          { _id: userData.id },
+          { email: userData.email }
+        ]
+      });
+      
+      if (dbUser) {
+        return {
+          id: dbUser._id.toString(),
+          name: `${dbUser.fname} ${dbUser.lname}`,
+          email: dbUser.email,
+          image: dbUser.image || undefined,
+          loginType: 'standard'
+        };
+      }
+    }
+   
+    return null;
+  } catch (error) {
+    console.error('Error getting fresh user data:', error);
+    throw error;
   }
 };

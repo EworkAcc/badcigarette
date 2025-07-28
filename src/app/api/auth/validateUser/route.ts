@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import { validateUserExists } from '@/lib/authUtils.server';
-import { UserData } from '@/lib/authUtils';
+import { UserData } from '@/lib/authUtils.client';
 
 export async function GET(request: NextRequest) {
   try {
@@ -52,7 +52,7 @@ export async function GET(request: NextRequest) {
       );
     } catch (dbError) {
       console.error('Database connection error:', dbError);
-      
+     
       return NextResponse.json(
         { valid: false, message: 'Database temporarily unavailable' },
         { status: 503 }
@@ -66,4 +66,8 @@ export async function GET(request: NextRequest) {
       { status: 500 }
     );
   }
+}
+
+export async function POST(request: NextRequest) {
+  return GET(request);
 }
