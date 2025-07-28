@@ -114,3 +114,8 @@ export const getUserDisplayName = (userData: UserData | null): string => {
   if (!userData) return 'Guest';
   return userData.name || 'User';
 };
+
+export const getUserEmail = (userData: UserData | null): string => {
+  if (!userData) return '';
+  return userData.email || '';
+}
