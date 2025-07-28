@@ -1,3 +1,5 @@
+"use client";
+
 import { NextRequest, NextResponse } from 'next/server';
 import { validateUserExists } from '@/lib/authUtils.server';
 import { UserData, getUserEmail, getAuthCookie } from '@/lib/authUtils.client';
