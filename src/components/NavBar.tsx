@@ -101,70 +101,81 @@ const Navigation: React.FC = () => {
     }
   };
 
-  useEffect(() => {
-    const checkAuth = async () => {
-      if (session?.user) {
-        const googleUserData: UserData = {
-          id: (session.user as any).id || 'google-user',
-          name: session.user.name || 'Google User',
-          email: session.user.email || '',
-          image: session.user.image || undefined,
-          loginType: 'google'
-        };
-        
-        setUserData(googleUserData);
+
+useEffect(() => {
+  const checkAuth = async () => {
+    if (session?.user) {
+      const cookieUser = getAuthCookie();
+      
+      if (cookieUser && cookieUser.loginType === 'google') {
+        setUserData(cookieUser);
         setIsLoading(false);
         return;
       }
-      
-      const cookieUser = getAuthCookie();
-      if (cookieUser) {
-        setUserData(cookieUser);
-      }
-      
-      if (status !== 'loading') {
-        setIsLoading(false);
-      }
-    };
 
-    checkAuth();
+      if (!cookieUser) {
+        try {
+          console.log('Google session found, creating auth_user cookie...');
+          const response = await fetch('/api/auth/googleCookie', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+          });
 
-    const handleStorageChange = () => {
-      if (!session) {
-        checkAuth();
-      }
-    };
-
-    window.addEventListener('storage', handleStorageChange);
-    return () => window.removeEventListener('storage', handleStorageChange);
-  }, [session, status]);
-
-  useEffect(() => {
-    if (!userData || isLoading) return;
-
-    const initialValidation = async () => {
-      const isValid = await validateUser(userData);
-      if (!isValid && !getAuthCookie()) {
-        setUserData(null);
-      }
-    };
-    
-    const initialTimeout = setTimeout(initialValidation, 1000);
-
-    const validateInterval = setInterval(async () => {
-      if (userData && !isValidating) {
-        const isValid = await validateUser(userData);
-        if (!isValid && !getAuthCookie()) {
-          setUserData(null);
+          if (response.ok) {
+            const data = await response.json();
+            console.log('✅ Google cookie created successfully:', data.user);
+            setUserData(data.user);
+            setIsLoading(false);
+            return;
+          } else {
+            const errorData = await response.json().catch(() => ({ message: 'Unknown error' }));
+            console.error('❌ Failed to set Google cookie:', response.status, errorData);
+            
+            console.log('🔄 Falling back to session data');
+          }
+        } catch (error) {
+          console.error('❌ Error calling googleCookie API:', error);
+          console.log('🔄 Falling back to session data');
         }
       }
-    }, 5 * 60 * 1000); 
 
-    return () => {
-      clearTimeout(initialTimeout);
-      clearInterval(validateInterval);
-    };
-  }, [userData, isLoading]);
+      const googleUserData: UserData = {
+        id: (session.user as any).id || 'google-user',
+        name: session.user.name || 'Google User',
+        email: session.user.email || '',
+        image: session.user.image || undefined,
+        loginType: 'google'
+      };
+      
+      console.log('📝 Using fallback session data:', googleUserData);
+      setUserData(googleUserData);
+      setIsLoading(false);
+      return;
+    }
+    
+    const cookieUser = getAuthCookie();
+    if (cookieUser) {
+      setUserData(cookieUser);
+    }
+    
+    if (status !== 'loading') {
+      setIsLoading(false);
+    }
+  };
+
+  checkAuth();
+
+  const handleStorageChange = () => {
+    if (!session) {
+      checkAuth();
+    }
+  };
+
+  window.addEventListener('storage', handleStorageChange);
+  return () => window.removeEventListener('storage', handleStorageChange);
+}, [session, status]);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
