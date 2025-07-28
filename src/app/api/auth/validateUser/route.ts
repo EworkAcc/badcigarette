@@ -7,6 +7,8 @@ export async function GET(request: NextRequest) {
   try {
     const cookieStore = await cookies();
     const authCookie = cookieStore.get('auth_user');
+    const cookiesAll = cookieStore.getAll();
+    console.log('All cookies:', cookiesAll);
     console.log(authCookie)
     if (!authCookie) {
       return NextResponse.json(
