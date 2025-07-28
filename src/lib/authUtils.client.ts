@@ -97,7 +97,6 @@ export const getValidatedAuthCookie = async (): Promise<UserData | null> => {
  
   return userData;
 };
-
 export const isLoggedIn = async (): Promise<boolean> => {
   const userData = await getValidatedAuthCookie();
   return userData !== null;
