@@ -1,6 +1,7 @@
 import React from 'react';
 import connectDB from '@/lib/connectDB';
 import subCigarettes from '@/models/subCigarettes';
+import { calculateOverallRating } from '@/lib/ratingCalculator';
 import CigaretteCard from '@/components/SubCigCard';
 import AddCigaretteForm from '@/components/AddSubCig';
 import Navigation from '@/components/NavBar';
@@ -28,19 +29,57 @@ async function getTopCigarettes(): Promise<SubCigarette[]> {
     
     const cigarettes = await subCigarettes
       .find({})
-      .sort({ rating: -1 })
-      .limit(5)
-      .select('id name description rating posts')
+      .select('id name description rating noOfReviews posts')
       .lean();
     
-    return cigarettes.map(cig => ({
-      id: cig.id,
-      name: cig.name,
-      description: cig.description,
-      rating: cig.rating || 0,
-      noOfReviews: cig.noOfReviews || 0,
-      posts: cig.posts || []
-    }));
+    const processedCigarettes = cigarettes.map(cig => {
+      const serializedPosts = (cig.posts || []).map((post: any) => ({
+        id: post.id || post._id?.toString(),
+        title: post.title || 'Untitled Review',
+        body: post.body || '',
+        user: post.user || 'Anonymous',
+        userImage: post.userImage || '/defaultPFP.png',
+        rating: post.rating || 0,
+        createdAt: post.createdAt ? post.createdAt.toISOString() : new Date().toISOString(),
+        updatedAt: post.updatedAt ? post.updatedAt.toISOString() : new Date().toISOString(),
+        votes: post.votes ? {
+          id: post.votes.id || post.votes._id?.toString(),
+          noOfUpvotes: post.votes.noOfUpvotes || 0,
+          noOfDownvotes: post.votes.noOfDownvotes || 0,
+          userUp: post.votes.userUp || [],
+          userDown: post.votes.userDown || []
+        } : {
+          id: '',
+          noOfUpvotes: post.upvotes || 0,
+          noOfDownvotes: post.downvotes || 0,
+          userUp: [],
+          userDown: []
+        },
+        comments: (post.comments || []).map((comment: any) => ({
+          id: comment.id || comment._id?.toString(),
+          body: comment.body || '',
+          user: comment.user || 'Anonymous',
+          rating: comment.rating || 0,
+          createdAt: comment.createdAt ? comment.createdAt.toISOString() : new Date().toISOString()
+        }))
+      }));
+
+      const { rating: realRating, totalReviews } = calculateOverallRating(serializedPosts);
+
+      return {
+        id: cig.id || cig._id?.toString(),
+        name: cig.name,
+        description: cig.description,
+        rating: realRating,
+        noOfReviews: totalReviews,
+        posts: serializedPosts
+      };
+    });
+
+    return processedCigarettes
+      .sort((a, b) => b.rating - a.rating)
+      .slice(0, 5);
+      
   } catch (error) {
     console.error('Error fetching top cigarettes:', error);
     return [];

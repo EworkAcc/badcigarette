@@ -1,3 +1,4 @@
+import { NextRequest } from 'next/server';
 import connectDB from './connectDB';
 import { GoogleUser } from '@/models/googleUsers';
 import User from '@/models/User';
@@ -85,5 +86,24 @@ export const getFreshUserData = async (userData: UserData): Promise<UserData | n
   } catch (error) {
     console.error('Error getting fresh user data:', error);
     throw error;
+  }
+};
+
+export const getAuthCookie = async (request: NextRequest): Promise<UserData | null> => {
+  try {
+    const cookieValue = request.cookies.get('auth_user')?.value;
+    if (!cookieValue) return null;
+   
+    const userData = JSON.parse(cookieValue) as UserData;
+    
+    const userExists = await validateUserExists(userData);
+    if (!userExists) {
+      return null;
+    }
+    
+    return userData;
+  } catch (error) {
+    console.error('Error parsing auth cookie:', error);
+    return null;
   }
 };

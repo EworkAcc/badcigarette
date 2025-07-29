@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import React from 'react';
+import { calculateOverallRating } from '@/lib/ratingCalculator';
 
 interface CigaretteCardProps {
   name: string;

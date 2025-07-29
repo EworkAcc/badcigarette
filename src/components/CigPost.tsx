@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import { getAuthCookie } from '@/lib/authUtils.client';
+import { usePathname } from 'next/navigation';
 
 interface CigarettePostProps {
   post: {
@@ -21,7 +22,7 @@ interface CigarettePostProps {
     comments?: any[];
   };
   onVoteUpdate: (postId: string, newVotes: any) => void;
-  onPostDelete?: (postId: string) => void; 
+  onPostDelete?: (postId: string) => void;
 }
 
 const CigarettePost: React.FC<CigarettePostProps> = ({ post, onVoteUpdate, onPostDelete }) => {
@@ -30,6 +31,7 @@ const CigarettePost: React.FC<CigarettePostProps> = ({ post, onVoteUpdate, onPos
   const [isHovered, setIsHovered] = useState(false);
   const [isDeleteHovered, setIsDeleteHovered] = useState(false);
   const userData = getAuthCookie();
+  const pathname = usePathname();
 
   const votes = post.votes || {
     noOfUpvotes: 0,
@@ -37,6 +39,8 @@ const CigarettePost: React.FC<CigarettePostProps> = ({ post, onVoteUpdate, onPos
     userUp: [],
     userDown: []
   };
+
+  const cigaretteId = pathname.split('/')[2];
 
   const handleVote = async (voteType: 'upvote' | 'downvote') => {
     if (!userData) {
@@ -97,7 +101,7 @@ const CigarettePost: React.FC<CigarettePostProps> = ({ post, onVoteUpdate, onPos
         },
         body: JSON.stringify({
           postId: post.id,
-          userEmail: userData.email 
+          userEmail: userData.email
         })
       });
 
@@ -129,14 +133,14 @@ const CigarettePost: React.FC<CigarettePostProps> = ({ post, onVoteUpdate, onPos
   const isPostOwner = userData && userData.name === post.user;
 
   return (
-    <div 
+    <div
       className="bg-gray-700 rounded-lg p-4"
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
       <div className="flex items-start space-x-3">
-        <img 
-          src={post.userImage || '/defaultPFP.png'} 
+        <img
+          src={post.userImage || '/defaultPFP.png'}
           alt={post.user || 'User'}
           className="w-10 h-10 rounded-full"
           onError={(e) => {
@@ -153,8 +157,8 @@ const CigarettePost: React.FC<CigarettePostProps> = ({ post, onVoteUpdate, onPos
                   <span
                     key={starIndex}
                     className={`text-sm ${
-                      starIndex < (post.rating || 0) 
-                        ? 'text-yellow-400' 
+                      starIndex < (post.rating || 0)
+                        ? 'text-yellow-400'
                         : 'text-gray-500'
                     }`}
                   >
@@ -184,8 +188,8 @@ const CigarettePost: React.FC<CigarettePostProps> = ({ post, onVoteUpdate, onPos
             )}
           </div>
           
-          <a 
-            href="#" 
+          <a
+            href={`/subCigarettes/${cigaretteId}/${post.id}`}
             className="text-lg font-semibold text-red-400 hover:text-red-300 transition-colors mb-2 block"
           >
             {post.title || 'Untitled Review'}
@@ -199,12 +203,12 @@ const CigarettePost: React.FC<CigarettePostProps> = ({ post, onVoteUpdate, onPos
           
           <div className="flex items-center space-x-4">
             <div className="flex items-center space-x-1">
-              <button 
+              <button
                 onClick={() => handleVote('upvote')}
                 disabled={isVoting}
                 className={`transition-colors ${
-                  currentUserUpvoted 
-                    ? 'text-green-400' 
+                  currentUserUpvoted
+                    ? 'text-green-400'
                     : 'text-gray-400 hover:text-green-400'
                 } ${isVoting ? 'opacity-50 cursor-not-allowed' : ''}`}
               >
@@ -213,21 +217,24 @@ const CigarettePost: React.FC<CigarettePostProps> = ({ post, onVoteUpdate, onPos
               <span className="text-sm text-gray-300 min-w-[20px] text-center">
                 {netVotes}
               </span>
-              <button 
+              <button
                 onClick={() => handleVote('downvote')}
                 disabled={isVoting}
                 className={`transition-colors ${
-                  currentUserDownvoted 
-                    ? 'text-red-400' 
+                  currentUserDownvoted
+                    ? 'text-red-400'
                     : 'text-gray-400 hover:text-red-400'
                 } ${isVoting ? 'opacity-50 cursor-not-allowed' : ''}`}
               >
                 ↓
               </button>
             </div>
-            <button className="text-gray-400 hover:text-blue-400 text-sm transition-colors">
+            <a 
+              href={`/subCigarettes/${cigaretteId}/${post.id}`}
+              className="text-gray-400 hover:text-blue-400 text-sm transition-colors"
+            >
               💬 {post.comments?.length || 0} comments
-            </button>
+            </a>
           </div>
         </div>
       </div>

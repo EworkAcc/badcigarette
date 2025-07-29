@@ -13,7 +13,7 @@ export const cigPostSchema = new mongoose.Schema({
     userEmail: { type: String, required: true },
     userImage: { type: String, required: true }, 
     votes: { type: cigVoteSchema, required: true },
-    rating: { type: Number, required: true, default: 0 }
+    rating: { type: Number, required: true, default: 0 },
 }, {
     timestamps: true 
 });

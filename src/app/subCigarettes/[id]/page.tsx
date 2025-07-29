@@ -2,6 +2,7 @@ import React from 'react';
 import { notFound } from 'next/navigation';
 import connectDB from '@/lib/connectDB';
 import subCigarettes from '@/models/subCigarettes';
+import { calculateOverallRating } from '@/lib/ratingCalculator';
 import Navigation from '@/components/NavBar';
 import ClientSideWrapper from '@/components/ClientSideWrapper';
 import CigarettePostsList from '@/components/CigPostList';
@@ -60,16 +61,19 @@ async function getCigaretteById(id: string): Promise<SubCigarette | null> {
         id: comment.id || comment._id?.toString(),
         body: comment.body || '',
         user: comment.user || 'Anonymous',
+        rating: comment.rating || 0,
         createdAt: comment.createdAt ? comment.createdAt.toISOString() : new Date().toISOString()
       }))
     }));
+
+    const { rating: realRating, totalReviews } = calculateOverallRating(serializedPosts);
    
     return {
       id: cigarette.id || cigarette._id?.toString(),
       name: cigarette.name,
       description: cigarette.description,
-      rating: cigarette.rating || 0,
-      noOfReviews: cigarette.noOfReviews || 0,
+      rating: realRating,
+      noOfReviews: totalReviews,
       posts: serializedPosts
     };
   } catch (error) {
@@ -81,14 +85,10 @@ async function getCigaretteById(id: string): Promise<SubCigarette | null> {
 const CigarettePage: React.FC<PageProps> = async ({ params }) => {
   const { id } = await params;
   const cigarette = await getCigaretteById(id);
-  
+ 
   if (!cigarette) {
     notFound();
   }
-
-  const realRating = cigarette.posts.length > 0 
-    ? cigarette.posts.reduce((acc: number, post: any) => acc + (post.rating || 0), 0) / cigarette.posts.length
-    : cigarette.rating || 0;
  
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -103,7 +103,7 @@ const CigarettePage: React.FC<PageProps> = async ({ params }) => {
             <div className="flex items-center">
               <span className="text-yellow-400 text-2xl">★</span>
               <span className="text-xl font-semibold text-white ml-1">
-                {realRating.toFixed(1)}
+                {cigarette.rating.toFixed(1)}
               </span>
             </div>
           </div>
@@ -112,7 +112,8 @@ const CigarettePage: React.FC<PageProps> = async ({ params }) => {
           {cigarette.description}
         </p>
         <div className="mt-4 text-gray-400">
-          <p>Reviews: {cigarette.posts.length}</p>
+          <p>Total Reviews: {cigarette.noOfReviews} (including posts and comments)</p>
+          <p>Posts: {cigarette.posts.length}</p>
           <p>ID: {cigarette.id}</p>
         </div>
       </div>
@@ -128,7 +129,7 @@ const CigarettePage: React.FC<PageProps> = async ({ params }) => {
 
           <div className="bg-gray-800 rounded-lg p-6">
             <h2 className="text-2xl font-semibold mb-4 text-red-400">
-              Reviews ({cigarette.posts.length})
+              Posts ({cigarette.posts.length})
             </h2>
             <CigarettePostsList posts={cigarette.posts} />
           </div>
@@ -140,10 +141,14 @@ const CigarettePage: React.FC<PageProps> = async ({ params }) => {
             <div className="space-y-3">
               <div className="flex justify-between">
                 <span className="text-gray-400">Overall Rating:</span>
-                <span className="text-white font-semibold">{realRating.toFixed(1)}/5</span>
+                <span className="text-white font-semibold">{cigarette.rating.toFixed(1)}/5</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-gray-400">Total Reviews:</span>
+                <span className="text-white font-semibold">{cigarette.noOfReviews}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-gray-400">Posts:</span>
                 <span className="text-white font-semibold">{cigarette.posts.length}</span>
               </div>
               <div className="flex justify-between">
