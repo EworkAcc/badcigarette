@@ -1,7 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { revalidatePath } from 'next/cache';
 import connectDB from '@/lib/connectDB';
 import subCigarettes from '@/models/subCigarettes';
 import generateUniqueId from '@/lib/uniqueID';
+
+export const dynamic = 'force-dynamic';
 
 export async function POST(request: NextRequest) {
   try {
@@ -44,6 +47,8 @@ export async function POST(request: NextRequest) {
     });
 
     const savedSubCig = await newSubCig.save();
+
+    revalidatePath('/subCigarettes');
 
     const response = NextResponse.json(
       { 

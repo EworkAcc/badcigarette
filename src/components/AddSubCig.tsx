@@ -36,6 +36,7 @@ const AddCigaretteForm: React.FC = () => {
           description: description.trim(),
           rating: 0
         }),
+        cache: 'no-store'
       });
 
       const data = await response.json();
@@ -45,6 +46,11 @@ const AddCigaretteForm: React.FC = () => {
         setMessageType('success');
         setName('');
         setDescription('');
+        
+        setTimeout(() => {
+          window.location.reload();
+        }, 1500);
+        
       } else {
         setMessage(data.message || 'Failed to add cigarette');
         setMessageType('error');

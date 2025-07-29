@@ -5,6 +5,10 @@ import CigaretteCard from '@/components/SubCigCard';
 import AddCigaretteForm from '@/components/AddSubCig';
 import Navigation from '@/components/NavBar';
 
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+export const fetchCache = 'force-no-store';
+
 interface SubCigarette {
   id: string;
   name: string;
