@@ -352,7 +352,7 @@ const LoginPage: React.FC = () => {
                   placeholder="Enter your email"
                 />
               </div>
-
+              
               <div>
                 <label htmlFor="password" className="block text-sm font-medium text-gray-300 mb-2">
                   Password
@@ -387,6 +387,7 @@ const LoginPage: React.FC = () => {
                 </div>
               </div>
               
+              {/* 
               <div className="flex items-center justify-between">
                 <div className="flex items-center">
                   <input
@@ -405,7 +406,8 @@ const LoginPage: React.FC = () => {
                   Forgot password?
                 </a>
               </div>
-              
+              */}
+
               <button
                 type="submit"
                 disabled={isLoginLoading}
