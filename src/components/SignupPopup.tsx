@@ -108,7 +108,6 @@ const SignupPopup: React.FC<SignupPopupProps> = ({ isOpen, onClose, onSubmit }) 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
       <div className="bg-gray-800 rounded-lg p-6 w-full max-w-md max-h-[90vh] overflow-y-auto">
-        {/* Header with X button */}
         <div className="flex justify-between items-center mb-6">
           <h2 className="text-2xl font-bold text-red-400">Create Account</h2>
           <button
@@ -121,7 +120,6 @@ const SignupPopup: React.FC<SignupPopupProps> = ({ isOpen, onClose, onSubmit }) 
           </button>
         </div>
 
-        {/* Error Message */}
         {error && (
           <div 
             id="signup-error"
@@ -132,7 +130,6 @@ const SignupPopup: React.FC<SignupPopupProps> = ({ isOpen, onClose, onSubmit }) 
         )}
 
         <form onSubmit={handleSubmit} className="space-y-4">
-          {/* First Name */}
           <div>
             <label htmlFor="fname" className="block text-sm font-medium text-gray-300 mb-2">
               First Name
@@ -150,7 +147,6 @@ const SignupPopup: React.FC<SignupPopupProps> = ({ isOpen, onClose, onSubmit }) 
             />
           </div>
 
-          {/* Last Name */}
           <div>
             <label htmlFor="lname" className="block text-sm font-medium text-gray-300 mb-2">
               Last Name
@@ -168,7 +164,6 @@ const SignupPopup: React.FC<SignupPopupProps> = ({ isOpen, onClose, onSubmit }) 
             />
           </div>
 
-          {/* Email */}
           <div>
             <label htmlFor="signup-email" className="block text-sm font-medium text-gray-300 mb-2">
               Email Address
@@ -186,7 +181,6 @@ const SignupPopup: React.FC<SignupPopupProps> = ({ isOpen, onClose, onSubmit }) 
             />
           </div>
 
-          {/* Password */}
           <div>
             <label htmlFor="signup-password" className="block text-sm font-medium text-gray-300 mb-2">
               Password
@@ -222,7 +216,6 @@ const SignupPopup: React.FC<SignupPopupProps> = ({ isOpen, onClose, onSubmit }) 
             </div>
           </div>
 
-          {/* Phone Number */}
           <div>
             <label htmlFor="phone" className="block text-sm font-medium text-gray-300 mb-2">
               Phone Number
@@ -240,7 +233,6 @@ const SignupPopup: React.FC<SignupPopupProps> = ({ isOpen, onClose, onSubmit }) 
             />
           </div>
 
-          {/* country */}
           <div>
             <label htmlFor="country" className="block text-sm font-medium text-gray-300 mb-2">
               Country
@@ -258,7 +250,6 @@ const SignupPopup: React.FC<SignupPopupProps> = ({ isOpen, onClose, onSubmit }) 
             />
           </div>
 
-          {/* Over 18 Checkbox */}
           <div className="flex items-center">
             <input
               type="checkbox"
@@ -274,7 +265,6 @@ const SignupPopup: React.FC<SignupPopupProps> = ({ isOpen, onClose, onSubmit }) 
             </label>
           </div>
 
-          {/* Submit Button */}
           <button
             type="submit"
             disabled={isLoading || !formData.isOver18}

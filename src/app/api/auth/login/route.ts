@@ -1,4 +1,3 @@
-
 import { NextRequest, NextResponse } from 'next/server';
 import bcrypt from 'bcryptjs';
 import connectDB from '@/lib/connectDB';
@@ -22,6 +21,17 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         { message: 'Invalid credentials' },
         { status: 401 }
+      );
+    }
+
+    if (!user.isEmailVerified) {
+      return NextResponse.json(
+        { 
+          message: 'Please verify your email address before logging in',
+          requiresVerification: true,
+          email: email
+        },
+        { status: 403 }
       );
     }
 

@@ -4,6 +4,7 @@ import { JWT } from 'next-auth/jwt';
 import { Session } from 'next-auth';
 import connectDB from './connectDB';
 import { GoogleUser } from '@/models/googleUsers';
+import { checkEmailExists } from '@/lib/emailValidation';
 
 export const authConfig: NextAuthOptions = {
   secret: process.env.NEXTAUTH_SECRET,
@@ -17,6 +18,18 @@ export const authConfig: NextAuthOptions = {
     async signIn({ user, account, profile }) {
       if (account?.provider === 'google') {
         try {
+          if (!user.email) {
+            console.log('Google sign-in failed: No email provided');
+            return false;
+          }
+
+          const emailCheck = await checkEmailExists(user.email);
+          
+          if (emailCheck.exists && emailCheck.source === 'domestic') {
+            console.log(`Google login blocked: Email ${user.email} already has domestic account`);
+            return '/signon?error=EmailExistsWithDifferentProvider';
+          }
+          
           await connectDB();
           
           const existingUser = await GoogleUser.findOne({ 
@@ -91,6 +104,7 @@ export const authConfig: NextAuthOptions = {
 
   pages: {
     signIn: '/signon', 
+    error: '/auth/error',
   },
 
   session: {

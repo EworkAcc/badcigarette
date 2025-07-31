@@ -1,7 +1,7 @@
 "use client"
 
 import React, { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { signOut } from 'next-auth/react';
 import Navigation from '@/components/NavBar';
 import SignupPopup from '@/components/SignupPopup';
@@ -19,6 +19,7 @@ interface CreateUserParams {
 
 const LoginPage: React.FC = () => {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [userData, setUserData] = useState<UserData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [formData, setFormData] = useState({
@@ -29,6 +30,10 @@ const LoginPage: React.FC = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [isLoginLoading, setIsLoginLoading] = useState(false);
   const [showSignupPopup, setShowSignupPopup] = useState(false);
+  const [showResendButton, setShowResendButton] = useState(false);
+  const [userEmail, setUserEmail] = useState('');
+  const [error, setError] = useState('');
+  const [successMessage, setSuccessMessage] = useState('');
 
   useEffect(() => {
     const checkAuth = () => {
@@ -39,13 +44,22 @@ const LoginPage: React.FC = () => {
 
     checkAuth();
 
+    const errorParam = searchParams.get('error');
+    const messageParam = searchParams.get('message');
+
+    if (errorParam === 'EmailExistsWithDifferentProvider') {
+      setError('This email is already registered with a password. Please sign in with your email and password instead of Google.');
+    } else if (messageParam) {
+      setSuccessMessage(decodeURIComponent(messageParam));
+    }
+
     const handleStorageChange = () => {
       checkAuth();
     };
 
     window.addEventListener('storage', handleStorageChange);
     return () => window.removeEventListener('storage', handleStorageChange);
-  }, []);
+  }, [searchParams]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value, type, checked } = e.target;
@@ -53,56 +67,89 @@ const LoginPage: React.FC = () => {
       ...prev,
       [name]: type === 'checkbox' ? checked : value
     }));
+    
+    if (error) {
+      setError('');
+      setShowResendButton(false);
+    }
+    
+    if (successMessage) {
+      setSuccessMessage('');
+    }
   };
 
-const handleSubmit = async (e: React.FormEvent) => {
-  e.preventDefault();
-  setIsLoginLoading(true);
- 
-  try {
-    const response = await fetch('/api/auth/login', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        email: formData.email,
-        password: formData.password
-      }),
-    });
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsLoginLoading(true);
+    setError('');
+    setSuccessMessage('');
+    
+    try {
+      const response = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email: formData.email,
+          password: formData.password
+        }),
+      });
 
-    if (response.ok) {
       const responseData = await response.json();
-      
-      if (responseData.user) {
-        setUserData(responseData.user);
-        
-        setTimeout(() => {
-          window.dispatchEvent(new Event('storage'));
-        }, 100);
-        
-        router.push('/');
-      } else {
-        setTimeout(() => {
-          const user = getAuthCookie();
-          if (user) {
-            setUserData(user);
+
+      if (response.ok) {
+        if (responseData.user) {
+          setUserData(responseData.user);
+          
+          setTimeout(() => {
             window.dispatchEvent(new Event('storage'));
-            router.push('/');
-          }
-        }, 200);
+          }, 100);
+          
+          router.push('/');
+        } else {
+          setTimeout(() => {
+            const user = getAuthCookie();
+            if (user) {
+              setUserData(user);
+              window.dispatchEvent(new Event('storage'));
+              router.push('/');
+            }
+          }, 200);
+        }
+      } else {
+        if (responseData.requiresVerification) {
+          setError(responseData.message);
+          setShowResendButton(true);
+          setUserEmail(responseData.email);
+        } else {
+          setError(responseData.message || 'Invalid credentials');
+        }
       }
-    } else {
-      const errorData = await response.json();
-      alert(`Login failed: ${errorData.message || 'Invalid credentials'}`);
+    } catch (error) {
+      console.error('Login error:', error);
+      setError('Login failed. Please try again.');
+    } finally {
+      setIsLoginLoading(false);
     }
-  } catch (error) {
-    console.error('Login error:', error);
-    alert('Login failed. Please try again.');
-  } finally {
-    setIsLoginLoading(false);
-  }
-};
+  };
+
+  const handleResendVerification = async () => {
+    try {
+      const response = await fetch('/api/auth/resendVerification', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email: userEmail }),
+      });
+
+      const data = await response.json();
+      alert(response.ok ? data.message : data.message);
+    } catch (error) {
+      alert('Failed to resend verification email');
+    }
+  };
 
   const handleGoogleLogin = async () => {
     await simpleGoogleSignIn('/');
@@ -124,7 +171,6 @@ const handleSubmit = async (e: React.FormEvent) => {
       
       window.dispatchEvent(new Event('storage'));
       
-      
     } catch (error) {
       console.error('Logout error:', error);
       alert('Failed to log out. Please try again.');
@@ -137,48 +183,61 @@ const handleSubmit = async (e: React.FormEvent) => {
   };
 
   const handleSignupSubmit = async (userData: CreateUserParams) => {
-  try {
-    const response = await fetch('/api/auth/signup', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(userData),
-    });
+    try {
+      const response = await fetch('/api/auth/signup', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(userData),
+      });
 
-    if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.message || 'Failed to create account');
-    }
+      const responseData = await response.json();
 
-    const responseData = await response.json();
-    alert('Account created successfully!');
-    setShowSignupPopup(false);
-    
-    if (responseData.user) {
-      setUserData(responseData.user);
-      
-      setTimeout(() => {
-        window.dispatchEvent(new Event('storage'));
-      }, 100);
-      
-      router.push('/');
-    } else {
-      setTimeout(() => {
-        const user = getAuthCookie();
-        if (user) {
-          setUserData(user);
-          window.dispatchEvent(new Event('storage'));
-          router.push('/');
+      if (!response.ok) {
+        if (response.status === 409 && responseData.existingAccount) {
+          const { source } = responseData.existingAccount;
+          if (source === 'google') {
+            throw new Error('This email is already registered with Google. Please sign in with Google instead.');
+          } else {
+            throw new Error('This email is already registered. Please sign in instead.');
+          }
         }
-      }, 200);
+        throw new Error(responseData.message || 'Failed to create account');
+      }
+
+      if (responseData.requiresVerification) {
+        alert(responseData.message);
+        setShowSignupPopup(false);
+      } else {
+        alert('Account created successfully!');
+        setShowSignupPopup(false);
+        
+        if (responseData.user) {
+          setUserData(responseData.user);
+          
+          setTimeout(() => {
+            window.dispatchEvent(new Event('storage'));
+          }, 100);
+          
+          router.push('/');
+        } else {
+          setTimeout(() => {
+            const user = getAuthCookie();
+            if (user) {
+              setUserData(user);
+              window.dispatchEvent(new Event('storage'));
+              router.push('/');
+            }
+          }, 200);
+        }
+      }
+      
+    } catch (error: any) {
+      console.error('Error creating user:', error);
+      throw error;
     }
-    
-  } catch (error: any) {
-    console.error('Error creating user:', error);
-    throw error;
-  }
-};
+  };
 
   if (isLoading) {
     return (
@@ -230,7 +289,7 @@ const handleSubmit = async (e: React.FormEvent) => {
             </div>
 
             <div className="text-center mt-6">
-              <button 
+              <button
                 onClick={() => router.push('/')}
                 className="text-red-400 hover:text-red-300 font-medium"
               >
@@ -256,6 +315,26 @@ const handleSubmit = async (e: React.FormEvent) => {
           </div>
 
           <div className="bg-gray-800 rounded-lg p-8 shadow-xl">
+            {successMessage && (
+              <div className="bg-green-900 border border-green-700 rounded-lg p-3 mb-4">
+                <p className="text-green-200 text-sm">{successMessage}</p>
+              </div>
+            )}
+
+            {error && (
+              <div className="bg-red-900 border border-red-700 rounded-lg p-3 mb-4">
+                <p className="text-red-200 text-sm">{error}</p>
+                {showResendButton && (
+                  <button
+                    onClick={handleResendVerification}
+                    className="mt-2 text-red-300 hover:text-red-200 underline text-sm"
+                  >
+                    Resend verification email
+                  </button>
+                )}
+              </div>
+            )}
+
             <form onSubmit={handleSubmit} className="space-y-6">
               
               <div>
@@ -307,6 +386,7 @@ const handleSubmit = async (e: React.FormEvent) => {
                   </button>
                 </div>
               </div>
+              
               <div className="flex items-center justify-between">
                 <div className="flex items-center">
                   <input
@@ -325,6 +405,7 @@ const handleSubmit = async (e: React.FormEvent) => {
                   Forgot password?
                 </a>
               </div>
+              
               <button
                 type="submit"
                 disabled={isLoginLoading}
@@ -373,7 +454,7 @@ const handleSubmit = async (e: React.FormEvent) => {
           <div className="text-center mt-6">
             <p className="text-gray-400">
               Don't have an account?{' '}
-              <button 
+              <button
                 onClick={handleSignupClick}
                 className="text-red-400 hover:text-red-300 font-medium"
               >
@@ -399,7 +480,7 @@ const handleSubmit = async (e: React.FormEvent) => {
               <div>
                 <h3 className="text-sm font-medium text-red-300">Health Warning</h3>
                 <p className="text-sm text-red-200 mt-1">
-                  Cigarettes cause cancer, heart disease, and other serious health conditions. 
+                  Cigarettes cause cancer, heart disease, and other serious health conditions.
                   Consider quitting for your health.
                 </p>
               </div>
@@ -408,7 +489,7 @@ const handleSubmit = async (e: React.FormEvent) => {
         </div>
       </div>
 
-      <SignupPopup 
+      <SignupPopup
         isOpen={showSignupPopup}
         onClose={() => setShowSignupPopup(false)}
         onSubmit={handleSignupSubmit}

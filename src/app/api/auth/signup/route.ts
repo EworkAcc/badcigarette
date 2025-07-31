@@ -2,6 +2,9 @@ import { NextRequest, NextResponse } from 'next/server';
 import bcrypt from 'bcryptjs';
 import connectDB from '@/lib/connectDB';
 import User from '@/models/User';
+import GoogleUser from '@/models/googleUsers';
+import { sendEmail, generateVerificationEmailHTML } from '@/lib/emailService';
+import { generateVerificationToken, getVerificationExpiry } from '@/lib/verificationToken';
 
 export async function POST(request: NextRequest) {
   try {
@@ -17,14 +20,60 @@ export async function POST(request: NextRequest) {
     await connectDB();
 
     const existingUser = await User.findOne({ email });
-    if (existingUser) {
+    const existingGoogleUser = await GoogleUser.findOne({ email });
+    if (existingGoogleUser) {
       return NextResponse.json(
-        { message: 'User already exists with this email' },
-        { status: 400 }
+        { message: 'Email is already registered via Google. Please sign in with Google.' },
+        { status: 409, headers: { 'Content-Type': 'application/json' } }
       );
+    }
+    if (existingUser) {
+      if (existingUser.isEmailVerified) {
+        return NextResponse.json(
+          { message: 'User already exists with this email' },
+          { status: 400 }
+        );
+      } else {
+        const verificationToken = generateVerificationToken();
+        const verificationExpiry = getVerificationExpiry();
+        
+        existingUser.fname = fname;
+        existingUser.lname = lname;
+        existingUser.password = await bcrypt.hash(password, 12);
+        existingUser.phone = phone;
+        existingUser.country = country;
+        existingUser.emailVerificationToken = verificationToken;
+        existingUser.emailVerificationExpires = verificationExpiry;
+        
+        await existingUser.save();
+
+        const verificationUrl = `${process.env.NEXT_PUBLIC_SITE_URL}/verify-email?token=${verificationToken}`;
+        const emailHTML = generateVerificationEmailHTML(`${fname} ${lname}`, verificationUrl);
+        
+        const emailSent = await sendEmail({
+          to: email,
+          subject: 'Verify Your Email - Bad Cigarettes',
+          html: emailHTML,
+        });
+
+        if (!emailSent) {
+          return NextResponse.json(
+            { message: 'Failed to send verification email' },
+            { status: 500 }
+          );
+        }
+
+        return NextResponse.json({
+          message: 'Registration updated. Please check your email for verification link.',
+          requiresVerification: true
+        });
+      }
     }
 
     const hashedPassword = await bcrypt.hash(password, 12);
+
+    const verificationToken = generateVerificationToken();
+    const verificationExpiry = getVerificationExpiry();
 
     const newUser = await User.create({
       fname,
@@ -33,33 +82,33 @@ export async function POST(request: NextRequest) {
       password: hashedPassword,
       phone,
       country,
-      pfp: '/defaultPFP.png'
+      image: '/defaultPFP.png',
+      isEmailVerified: false,
+      emailVerificationToken: verificationToken,
+      emailVerificationExpires: verificationExpiry,
     });
 
-    const userData = {
-      id: newUser._id.toString(),
-      name: `${newUser.fname} ${newUser.lname}`,
-      email: newUser.email,
-      image: newUser.pfp,
-      loginType: 'standard' as const
-    };
+    const verificationUrl = `${process.env.NEXT_PUBLIC_SITE_URL}/verify-email?token=${verificationToken}`;
+    const emailHTML = generateVerificationEmailHTML(`${fname} ${lname}`, verificationUrl);
+    
+    const emailSent = await sendEmail({
+      to: email,
+      subject: 'Verify Your Email - Bad Cigarettes',
+      html: emailHTML,
+    });
 
-    const response = NextResponse.json(
-      { message: 'User created successfully', user: userData },
-      { status: 201 }
-    );
+    if (!emailSent) {
+      await User.findByIdAndDelete(newUser._id);
+      return NextResponse.json(
+        { message: 'Failed to send verification email. Please try again.' },
+        { status: 500 }
+      );
+    }
 
-    const cookieOptions = {
-      httpOnly: false,
-      secure: process.env.NEXT_PUBLIC_ENV === 'production',
-      sameSite: 'lax' as const,
-      maxAge: 30 * 24 * 60 * 60,
-      path: '/',
-    };
-
-    response.cookies.set('auth_user', JSON.stringify(userData), cookieOptions);
-
-    return response;
+    return NextResponse.json({
+      message: 'Registration successful! Please check your email for verification link.',
+      requiresVerification: true
+    });
 
   } catch (error) {
     console.error('Signup error:', error);

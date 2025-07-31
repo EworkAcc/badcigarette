@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import { validateUserExists } from '@/lib/authUtils.server';
 import { UserData } from '@/lib/authUtils.client';
+import connectDB from '@/lib/connectDB';
+import User from '@/models/User';
 
 export async function GET(request: NextRequest) {
   try {
@@ -92,7 +94,24 @@ export async function GET(request: NextRequest) {
     }
 
     if (process.env.NEXT_PUBLIC_ENV === 'development') {
-      console.log('🚧 Skipping database validation in development');
+      if (userData.loginType === 'standard') {
+        try {
+          await connectDB();
+          const user = await User.findById(userData.id);
+          
+          if (user && !user.isEmailVerified) {
+            console.log('❌ User email not verified');
+            return NextResponse.json(
+              { valid: false, message: 'Email not verified', requiresVerification: true },
+              { status: 403 }
+            );
+          }
+        } catch (dbError) {
+          console.error('Database check error in development:', dbError);
+        }
+      }
+      
+      console.log('🚧 Skipping full database validation in development');
       return NextResponse.json(
         { valid: true, user: userData },
         { status: 200 }
@@ -122,6 +141,19 @@ export async function GET(request: NextRequest) {
         });
         
         return response;
+      }
+
+      if (userData.loginType === 'standard') {
+        await connectDB();
+        const user = await User.findById(userData.id);
+        
+        if (user && !user.isEmailVerified) {
+          console.log('❌ User email not verified');
+          return NextResponse.json(
+            { valid: false, message: 'Email not verified', requiresVerification: true },
+            { status: 403 }
+          );
+        }
       }
 
       console.log('✅ User validation successful');
