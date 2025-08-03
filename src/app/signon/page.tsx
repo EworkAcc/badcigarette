@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { signOut } from 'next-auth/react';
 import Navigation from '@/components/NavBar';
 import SignupPopup from '@/components/SignupPopup';
+import ForgotPasswordPopup from '@/components/ForgotPasswordPopup';
 import { simpleGoogleSignIn } from '@/lib/googleAuth';
 import { getAuthCookie, removeAuthCookie, UserData } from '@/lib/authUtils.client';
 
@@ -30,6 +31,7 @@ const LoginPageContent: React.FC = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [isLoginLoading, setIsLoginLoading] = useState(false);
   const [showSignupPopup, setShowSignupPopup] = useState(false);
+  const [showForgotPasswordPopup, setShowForgotPasswordPopup] = useState(false);
   const [showResendButton, setShowResendButton] = useState(false);
   const [userEmail, setUserEmail] = useState('');
   const [error, setError] = useState('');
@@ -67,12 +69,12 @@ const LoginPageContent: React.FC = () => {
       ...prev,
       [name]: type === 'checkbox' ? checked : value
     }));
-    
+   
     if (error) {
       setError('');
       setShowResendButton(false);
     }
-    
+   
     if (successMessage) {
       setSuccessMessage('');
     }
@@ -83,7 +85,7 @@ const LoginPageContent: React.FC = () => {
     setIsLoginLoading(true);
     setError('');
     setSuccessMessage('');
-    
+   
     try {
       const response = await fetch('/api/auth/login', {
         method: 'POST',
@@ -101,11 +103,11 @@ const LoginPageContent: React.FC = () => {
       if (response.ok) {
         if (responseData.user) {
           setUserData(responseData.user);
-          
+         
           setTimeout(() => {
             window.dispatchEvent(new Event('storage'));
           }, 100);
-          
+         
           router.push('/');
         } else {
           setTimeout(() => {
@@ -165,12 +167,12 @@ const LoginPageContent: React.FC = () => {
           headers: { 'Content-Type': 'application/json' },
         });
       }
-      
+     
       removeAuthCookie();
       setUserData(null);
-      
+     
       window.dispatchEvent(new Event('storage'));
-      
+     
     } catch (error) {
       console.error('Logout error:', error);
       alert('Failed to log out. Please try again.');
@@ -212,14 +214,14 @@ const LoginPageContent: React.FC = () => {
       } else {
         alert('Account created successfully!');
         setShowSignupPopup(false);
-        
+       
         if (responseData.user) {
           setUserData(responseData.user);
-          
+         
           setTimeout(() => {
             window.dispatchEvent(new Event('storage'));
           }, 100);
-          
+         
           router.push('/');
         } else {
           setTimeout(() => {
@@ -232,7 +234,7 @@ const LoginPageContent: React.FC = () => {
           }, 200);
         }
       }
-      
+     
     } catch (error: any) {
       console.error('Error creating user:', error);
       throw error;
@@ -251,7 +253,7 @@ const LoginPageContent: React.FC = () => {
     return (
       <div className="flex items-center justify-center px-4 py-12">
         <div className="w-full max-w-md">
-          
+         
           <div className="text-center mb-8">
             <h1 className="text-3xl font-bold text-red-400 mb-2">Welcome Back</h1>
             <p className="text-gray-400">You are already signed in as {userData.name}</p>
@@ -298,7 +300,7 @@ const LoginPageContent: React.FC = () => {
   return (
     <div className="flex items-center justify-center px-4 py-12">
       <div className="w-full max-w-md">
-        
+       
         <div className="text-center mb-8">
           <h1 className="text-3xl font-bold text-red-400 mb-2">Welcome Back</h1>
           <p className="text-gray-400">Sign in to your Bad Cigarettes account</p>
@@ -326,7 +328,7 @@ const LoginPageContent: React.FC = () => {
           )}
 
           <form onSubmit={handleSubmit} className="space-y-6">
-            
+           
             <div>
               <label htmlFor="email" className="block text-sm font-medium text-gray-300 mb-2">
                 Email Address
@@ -342,7 +344,7 @@ const LoginPageContent: React.FC = () => {
                 placeholder="Enter your email"
               />
             </div>
-            
+           
             <div>
               <label htmlFor="password" className="block text-sm font-medium text-gray-300 mb-2">
                 Password
@@ -376,8 +378,7 @@ const LoginPageContent: React.FC = () => {
                 </button>
               </div>
             </div>
-            
-            {/* 
+           
             <div className="flex items-center justify-between">
               <div className="flex items-center">
                 <input
@@ -392,11 +393,14 @@ const LoginPageContent: React.FC = () => {
                   Remember me
                 </label>
               </div>
-              <a href="#" className="text-sm text-red-400 hover:text-red-300">
+              <button
+                type="button"
+                onClick={() => setShowForgotPasswordPopup(true)}
+                className="text-sm text-red-400 hover:text-red-300"
+              >
                 Forgot password?
-              </a>
+              </button>
             </div>
-            */}
 
             <button
               type="submit"
@@ -485,6 +489,11 @@ const LoginPageContent: React.FC = () => {
         onClose={() => setShowSignupPopup(false)}
         onSubmit={handleSignupSubmit}
       />
+
+      <ForgotPasswordPopup
+        isOpen={showForgotPasswordPopup}
+        onClose={() => setShowForgotPasswordPopup(false)}
+      />
     </div>
   );
 };
@@ -508,7 +517,7 @@ const LoginPage: React.FC = () => {
   return (
     <div className="min-h-screen bg-gray-900 text-white">
       <Navigation />
-      
+     
       <Suspense fallback={<LoadingFallback />}>
         <LoginPageContent />
       </Suspense>

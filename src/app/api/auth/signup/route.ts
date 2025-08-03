@@ -47,7 +47,7 @@ export async function POST(request: NextRequest) {
         
         await existingUser.save();
 
-        const verificationUrl = `${process.env.NEXT_PUBLIC_SITE_URL}/verify-email?token=${verificationToken}`;
+        const verificationUrl = `${process.env.NEXT_PUBLIC_SITE_URL}/verifyEmail?token=${verificationToken}`;
         const emailHTML = generateVerificationEmailHTML(`${fname} ${lname}`, verificationUrl);
         
         const emailSent = await sendEmail({
@@ -88,7 +88,7 @@ export async function POST(request: NextRequest) {
       emailVerificationExpires: verificationExpiry,
     });
 
-    const verificationUrl = `${process.env.NEXT_PUBLIC_SITE_URL}/verify-email?token=${verificationToken}`;
+    const verificationUrl = `${process.env.NEXT_PUBLIC_SITE_URL}/verifyEmail?token=${verificationToken}`;
     const emailHTML = generateVerificationEmailHTML(`${fname} ${lname}`, verificationUrl);
     
     const emailSent = await sendEmail({
