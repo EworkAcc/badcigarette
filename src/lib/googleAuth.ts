@@ -12,11 +12,6 @@ interface GoogleSignInResult {
   url?: string;
 }
 
-/**
- * @param router - Next.js router instance for navigation
- * @param options - Sign-in options (optional)
- * @returns Promise with sign-in result
- */
 export const handleGoogleSignIn = async (
   router: AppRouterInstance,
   options: GoogleSignInOptions = {}
@@ -68,10 +63,6 @@ export const handleGoogleSignIn = async (
   }
 };
 
-/**
- * This integrates with your custom auth cookie system
- * @param callbackUrl - URL to redirect to after successful sign-in (optional)
- */
 export const simpleGoogleSignIn = async (
   callbackUrl: string = '/'
 ): Promise<void> => {
@@ -111,10 +102,6 @@ export const simpleGoogleSignIn = async (
   }
 };
 
-/**
- * @param setIsLoading - State setter for loading indicator
- * @param callbackUrl - Callback URL after sign-in
- */
 export const handleGoogleSignInWithLoading = async (
   setIsLoading: (loading: boolean) => void,
   callbackUrl: string = '/'
@@ -131,9 +118,6 @@ export const handleGoogleSignInWithLoading = async (
   }
 };
 
-/** 
- * @param setIsLoading - Loading state setter (optional)
- */
 export const useGoogleSignIn = (
   setIsLoading?: (loading: boolean) => void
 ) => {

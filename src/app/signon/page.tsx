@@ -25,8 +25,7 @@ const LoginPageContent: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [formData, setFormData] = useState({
     email: '',
-    password: '',
-    rememberMe: false
+    password: ''
   });
   const [showPassword, setShowPassword] = useState(false);
   const [isLoginLoading, setIsLoginLoading] = useState(false);
@@ -64,10 +63,10 @@ const LoginPageContent: React.FC = () => {
   }, [searchParams]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value, type, checked } = e.target;
+    const { name, value } = e.target;
     setFormData(prev => ({
       ...prev,
-      [name]: type === 'checkbox' ? checked : value
+      [name]: value
     }));
    
     if (error) {
@@ -379,20 +378,7 @@ const LoginPageContent: React.FC = () => {
               </div>
             </div>
            
-            <div className="flex items-center justify-between">
-              <div className="flex items-center">
-                <input
-                  type="checkbox"
-                  id="rememberMe"
-                  name="rememberMe"
-                  checked={formData.rememberMe}
-                  onChange={handleInputChange}
-                  className="h-4 w-4 text-red-600 bg-gray-700 border-gray-600 rounded focus:ring-red-500 focus:ring-2"
-                />
-                <label htmlFor="rememberMe" className="ml-2 text-sm text-gray-300">
-                  Remember me
-                </label>
-              </div>
+            <div className="flex items-center justify-start">
               <button
                 type="button"
                 onClick={() => setShowForgotPasswordPopup(true)}
