@@ -16,11 +16,44 @@ interface SubCigarette {
   description: string;
   rating: number;
   noOfReviews: number;
+  type: string;
   posts: any[];
+  score: number; 
 }
 
 interface TopCigarettesPageProps {
   topCigarettes: SubCigarette[];
+}
+
+function getTypeDisplayName(type: string): string {
+  const typeMap: { [key: string]: string } = {
+    'r': 'Regular',
+    'l': 'Light',
+    'ul': 'Ultra Light',
+    'm': 'Menthol'
+  };
+  return typeMap[type] || 'Unknown';
+}
+
+// Calculate ranking score based on rating and review count
+function calculateRankingScore(rating: number, reviewCount: number): number {
+  if (reviewCount === 0) return 0;
+  
+  // Wilson score confidence interval for a Bernoulli parameter
+  // This gives a lower bound on the "true" rating with statistical confidence
+  const positiveRatings = (rating / 5) * reviewCount; // Convert 5-star to ratio
+  const totalRatings = reviewCount;
+  
+  if (totalRatings === 0) return 0;
+  
+  const z = 1.96; // 95% confidence
+  const phat = positiveRatings / totalRatings;
+  const score = (phat + z * z / (2 * totalRatings) - z * Math.sqrt((phat * (1 - phat) + z * z / (4 * totalRatings)) / totalRatings)) / (1 + z * z / totalRatings);
+  
+  const baseScore = score * 5;
+  const reviewBonus = Math.log(reviewCount + 1) * 0.1; // Logarithmic bonus for review count
+  
+  return baseScore + reviewBonus;
 }
 
 async function getTopCigarettes(): Promise<SubCigarette[]> {
@@ -29,7 +62,7 @@ async function getTopCigarettes(): Promise<SubCigarette[]> {
     
     const cigarettes = await subCigarettes
       .find({})
-      .select('id name description rating noOfReviews posts')
+      .select('id name description rating noOfReviews type posts')
       .lean();
     
     const processedCigarettes = cigarettes.map(cig => {
@@ -65,6 +98,7 @@ async function getTopCigarettes(): Promise<SubCigarette[]> {
       }));
 
       const { rating: realRating, totalReviews } = calculateOverallRating(serializedPosts);
+      const rankingScore = calculateRankingScore(realRating, totalReviews);
 
       return {
         id: cig.id || cig._id?.toString(),
@@ -72,12 +106,15 @@ async function getTopCigarettes(): Promise<SubCigarette[]> {
         description: cig.description,
         rating: realRating,
         noOfReviews: totalReviews,
-        posts: serializedPosts
+        type: cig.type || 'r',
+        posts: serializedPosts,
+        score: rankingScore
       };
     });
 
+    // Sort by ranking score instead of just rating
     return processedCigarettes
-      .sort((a, b) => b.rating - a.rating)
+      .sort((a, b) => b.score - a.score)
       .slice(0, 5);
       
   } catch (error) {
@@ -97,7 +134,10 @@ const TopCigarettesPage: React.FC = async () => {
       <div className="bg-gradient-to-r from-gray-800 to-gray-700 rounded-lg p-8 mb-8">
         <h1 className="text-4xl font-bold mb-4">Top Rated Cigarettes</h1>
         <p className="text-xl text-gray-300">
-          Discover the highest rated cigarettes based on community reviews and ratings.
+          Discover the highest rated cigarettes based on community reviews, ratings, and review volume.
+        </p>
+        <p className="text-sm text-gray-400 mt-2">
+          Rankings consider both average rating and number of reviews to provide more reliable results.
         </p>
       </div>
 
@@ -124,14 +164,32 @@ const TopCigarettesPage: React.FC = async () => {
                 <div className="absolute -top-2 -left-2 bg-red-600 text-white rounded-full w-8 h-8 flex items-center justify-center text-sm font-bold z-10">
                   #{index + 1}
                 </div>
-                <CigaretteCard
-                  name={cigarette.name}
-                  description={cigarette.description}
-                  id={cigarette.id}
-                  rating={cigarette.rating}
-                  noOfReviews={cigarette.noOfReviews}
-                  reviews={cigarette.posts.length}
-                />
+                <div className="relative">
+                  <CigaretteCard
+                    name={cigarette.name}
+                    description={cigarette.description}
+                    id={cigarette.id}
+                    rating={cigarette.rating}
+                    noOfReviews={cigarette.noOfReviews}
+                    reviews={cigarette.posts.length}
+                  />
+                  {/* Type badge */}
+                  <div className="absolute top-3 right-3">
+                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                      cigarette.type === 'r' ? 'bg-gray-600 text-gray-200' :
+                      cigarette.type === 'l' ? 'bg-blue-600 text-blue-200' :
+                      cigarette.type === 'ul' ? 'bg-sky-600 text-sky-200' :
+                      cigarette.type === 'm' ? 'bg-green-600 text-green-200' :
+                      'bg-gray-600 text-gray-200'
+                    }`}>
+                      {getTypeDisplayName(cigarette.type)}
+                    </span>
+                  </div>
+                  {/* Ranking score for debugging - remove in production */}
+                  <div className="absolute bottom-2 right-2 text-xs text-gray-500">
+                    Score: {cigarette.score.toFixed(2)}
+                  </div>
+                </div>
               </div>
             ))}
           </div>

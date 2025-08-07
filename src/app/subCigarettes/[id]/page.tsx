@@ -13,6 +13,7 @@ interface SubCigarette {
   description: string;
   rating: number;
   noOfReviews: number;
+  type: string;
   posts: any[];
 }
 
@@ -22,13 +23,33 @@ interface PageProps {
   }>;
 }
 
+function getTypeDisplayName(type: string): string {
+  const typeMap: { [key: string]: string } = {
+    'r': 'Regular',
+    'l': 'Light',
+    'ul': 'Ultra Light',
+    'm': 'Menthol'
+  };
+  return typeMap[type] || 'Unknown';
+}
+
+function getTypeColor(type: string): string {
+  const colorMap: { [key: string]: string } = {
+    'r': 'bg-gray-600 text-gray-200',
+    'l': 'bg-blue-600 text-blue-200',
+    'ul': 'bg-sky-600 text-sky-200',
+    'm': 'bg-green-600 text-green-200'
+  };
+  return colorMap[type] || 'bg-gray-600 text-gray-200';
+}
+
 async function getCigaretteById(id: string): Promise<SubCigarette | null> {
   try {
     await connectDB();
    
     const cigarette = await subCigarettes
       .findOne({ id })
-      .select('id name description rating noOfReviews posts')
+      .select('id name description rating noOfReviews type posts')
       .lean() as any;
    
     if (!cigarette) {
@@ -74,6 +95,7 @@ async function getCigaretteById(id: string): Promise<SubCigarette | null> {
       description: cigarette.description,
       rating: realRating,
       noOfReviews: totalReviews,
+      type: cigarette.type || 'r',
       posts: serializedPosts
     };
   } catch (error) {
@@ -98,7 +120,12 @@ const CigarettePage: React.FC<PageProps> = async ({ params }) => {
      
       <div className="bg-gradient-to-r from-gray-800 to-gray-700 rounded-lg p-8 mb-8">
         <div className="flex items-center justify-between mb-4">
-          <h1 className="text-4xl font-bold text-white">{cigarette.name}</h1>
+          <div className="flex items-center space-x-4">
+            <h1 className="text-4xl font-bold text-white">{cigarette.name}</h1>
+            <span className={`px-3 py-1 rounded-full text-sm font-medium ${getTypeColor(cigarette.type)}`}>
+              {getTypeDisplayName(cigarette.type)}
+            </span>
+          </div>
           <div className="flex items-center space-x-2">
             <div className="flex items-center">
               <span className="text-yellow-400 text-2xl">★</span>
@@ -114,6 +141,7 @@ const CigarettePage: React.FC<PageProps> = async ({ params }) => {
         <div className="mt-4 text-gray-400">
           <p>Total Reviews: {cigarette.noOfReviews} (including posts and comments)</p>
           <p>Posts: {cigarette.posts.length}</p>
+          <p>Type: {getTypeDisplayName(cigarette.type)}</p>
           <p>ID: {cigarette.id}</p>
         </div>
       </div>
@@ -122,6 +150,12 @@ const CigarettePage: React.FC<PageProps> = async ({ params }) => {
         <div className="lg:col-span-2">
           <div className="bg-gray-800 rounded-lg p-6 mb-6">
             <h2 className="text-2xl font-semibold mb-4 text-red-400">About {cigarette.name}</h2>
+            <div className="flex items-center mb-3">
+              <span className="text-gray-400 mr-2">Type:</span>
+              <span className={`px-2 py-1 rounded text-sm font-medium ${getTypeColor(cigarette.type)}`}>
+                {getTypeDisplayName(cigarette.type)}
+              </span>
+            </div>
             <p className="text-gray-300 leading-relaxed">
               {cigarette.description}
             </p>
@@ -150,6 +184,10 @@ const CigarettePage: React.FC<PageProps> = async ({ params }) => {
               <div className="flex justify-between">
                 <span className="text-gray-400">Posts:</span>
                 <span className="text-white font-semibold">{cigarette.posts.length}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-gray-400">Type:</span>
+                <span className="text-white font-semibold">{getTypeDisplayName(cigarette.type)}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-gray-400">Cigarette ID:</span>

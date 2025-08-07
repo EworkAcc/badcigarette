@@ -6,9 +6,17 @@ import generateUniqueId from '@/lib/uniqueID';
 const AddCigaretteForm: React.FC = () => {
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
+  const [type, setType] = useState('r'); 
   const [isLoading, setIsLoading] = useState(false);
   const [message, setMessage] = useState('');
   const [messageType, setMessageType] = useState<'success' | 'error' | ''>('');
+
+  const typeOptions = [
+    { value: 'r', label: 'Regular' },
+    { value: 'l', label: 'Light' },
+    { value: 'ul', label: 'Ultra Light' },
+    { value: 'm', label: 'Menthol' }
+  ];
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -34,7 +42,8 @@ const AddCigaretteForm: React.FC = () => {
           id: generateUniqueId(),
           posts: [],
           description: description.trim(),
-          rating: 0
+          rating: 0,
+          type: type
         }),
         cache: 'no-store'
       });
@@ -46,6 +55,7 @@ const AddCigaretteForm: React.FC = () => {
         setMessageType('success');
         setName('');
         setDescription('');
+        setType('r'); 
         
         setTimeout(() => {
           window.location.reload();
@@ -82,6 +92,25 @@ const AddCigaretteForm: React.FC = () => {
             className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-red-500"
             disabled={isLoading}
           />
+        </div>
+
+        <div>
+          <label htmlFor="type" className="block text-sm font-medium text-gray-300 mb-2">
+            Cigarette Type
+          </label>
+          <select
+            id="type"
+            value={type}
+            onChange={(e) => setType(e.target.value)}
+            className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-white focus:outline-none focus:ring-2 focus:ring-red-500"
+            disabled={isLoading}
+          >
+            {typeOptions.map((option) => (
+              <option key={option.value} value={option.value}>
+                {option.label}
+              </option>
+            ))}
+          </select>
         </div>
 
         <div>

@@ -8,7 +8,7 @@ export const dynamic = 'force-dynamic';
 
 export async function POST(request: NextRequest) {
   try {
-    const { name, id, posts, description, rating } = await request.json();
+    const { name, id, posts, description, rating, type } = await request.json();
 
     if (!name || !id || !description || rating === undefined) {
       return NextResponse.json(
@@ -16,6 +16,9 @@ export async function POST(request: NextRequest) {
         { status: 400 }
       );
     }
+
+    const validTypes = ['r', 'l', 'ul', 'm'];
+    const cigaretteType = type && validTypes.includes(type) ? type : 'r';
 
     await connectDB();
 
@@ -43,7 +46,8 @@ export async function POST(request: NextRequest) {
       posts: posts || [], 
       description: description.trim(),
       rating,
-      noOfReviews: 0 
+      noOfReviews: 0,
+      type: cigaretteType
     });
 
     const savedSubCig = await newSubCig.save();
