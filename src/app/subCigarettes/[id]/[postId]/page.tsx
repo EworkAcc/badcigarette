@@ -150,7 +150,6 @@ const IndividualPostPage: React.FC<PageProps> = async ({ params }) => {
         </nav>
       </div>
 
-      {/* Main Post */}
       <div className="bg-gray-800 rounded-lg p-6 mb-8">
         <div className="flex items-start space-x-4">
           <UserAvatar 

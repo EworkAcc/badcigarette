@@ -64,7 +64,6 @@ const CommentForm: React.FC<CommentFormProps> = ({
         replyingTo
       });
       
-      // Reset form
       setBody('');
       setRating(0);
       setHoveredStar(0);
