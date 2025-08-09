@@ -74,6 +74,7 @@ const CommentSection: React.FC<CommentSectionProps> = ({
 }) => {
   const [comments, setComments] = useState<Comment[]>(initialComments);
   const [isLoading, setIsLoading] = useState(false);
+  const [submitError, setSubmitError] = useState<string>('');
 
   const organizedComments = organizeComments(comments);
 
@@ -84,6 +85,8 @@ const CommentSection: React.FC<CommentSectionProps> = ({
     replyingTo?: string;
   }) => {
     setIsLoading(true);
+    setSubmitError('');
+    
     try {
       const response = await fetch(`/api/subCigarettes/${cigaretteId}/posts/${postId}/comments`, {
         method: 'POST',
@@ -96,13 +99,28 @@ const CommentSection: React.FC<CommentSectionProps> = ({
       if (response.ok) {
         const data = await response.json();
         setComments(prev => [...prev, data.comment]);
+        
+        if (data.ratingAffected) {
+          console.log('Your comment affected the cigarette rating!');
+        }
       } else {
         const errorData = await response.json();
-        alert(errorData.message || 'Failed to post comment');
+        
+        if (response.status === 429) {
+          setSubmitError(errorData.message || 'Comment limit exceeded. Please wait before commenting again.');
+        } else {
+          setSubmitError(errorData.message || 'Failed to post comment');
+        }
+        throw new Error(errorData.message || 'Failed to post comment');
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error posting comment:', error);
-      alert('Failed to post comment. Please try again.');
+      
+      if (!submitError) {
+        setSubmitError('Failed to post comment. Please try again.');
+      }
+      
+      throw error; 
     } finally {
       setIsLoading(false);
     }
@@ -128,11 +146,19 @@ const CommentSection: React.FC<CommentSectionProps> = ({
         Comments ({comments.length})
       </h2>
 
+      {submitError && (
+        <div className="bg-red-900 border border-red-700 rounded-lg p-4 mb-6">
+          <h3 className="text-red-300 font-medium mb-2">Comment Error</h3>
+          <p className="text-red-200 text-sm">{submitError}</p>
+        </div>
+      )}
+
       <div className="mb-8">
         <CommentForm
           onSubmit={handleNewComment}
           isLoading={isLoading}
           cigaretteName={cigaretteName}
+          cigaretteId={cigaretteId}
           placeholder={`Share your thoughts about this review...`}
         />
       </div>

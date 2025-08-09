@@ -59,7 +59,8 @@ const CommentCard: React.FC<CommentCardProps> = ({
   const [showReplyForm, setShowReplyForm] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
   const [isDeleteHovered, setIsDeleteHovered] = useState(false);
-  
+  const [replyError, setReplyError] = useState<string>('');
+ 
   const userData = getAuthCookie();
 
   const votes = comment.votes || {
@@ -143,16 +144,28 @@ const CommentCard: React.FC<CommentCardProps> = ({
     parentId?: string;
     replyingTo?: string;
   }) => {
-    const parentId = comment.parentId || comment.id; 
-    const newDepth = Math.min(depth + 1, 1); 
+    const parentId = comment.parentId || comment.id;
+    const newDepth = Math.min(depth + 1, 1);
+   
+    setReplyError('');
     
-    await onNewReply({
-      ...replyData,
-      parentId,
-      replyingTo: comment.user
-    });
-    
-    setShowReplyForm(false);
+    try {
+      await onNewReply({
+        ...replyData,
+        parentId,
+        replyingTo: comment.user
+      });
+     
+      setShowReplyForm(false);
+    } catch (error: any) {
+      console.error('Error submitting reply:', error);
+      
+      if (error.message && error.message.includes('wait')) {
+        setReplyError(error.message);
+      } else {
+        setReplyError('Failed to post reply. Please try again.');
+      }
+    }
   };
 
   const currentUserUpvoted = userData && Array.isArray(votes.userUp) && votes.userUp.includes(userData.id);
@@ -215,7 +228,7 @@ const CommentCard: React.FC<CommentCardProps> = ({
                   </>
                 )}
               </div>
-              
+             
               {isCommentOwner && isHovered && (
                 <button
                   onClick={handleDeleteComment}
@@ -235,9 +248,9 @@ const CommentCard: React.FC<CommentCardProps> = ({
                 </button>
               )}
             </div>
-            
+           
             <p className="text-gray-300 mb-3">{comment.body}</p>
-            
+           
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-4">
                 <div className="flex items-center space-x-1">
@@ -267,21 +280,24 @@ const CommentCard: React.FC<CommentCardProps> = ({
                     ↓
                   </button>
                 </div>
-                
+               
                 <button
-                  onClick={() => setShowReplyForm(!showReplyForm)}
+                  onClick={() => {
+                    setShowReplyForm(!showReplyForm);
+                    setReplyError('');
+                  }}
                   className="text-gray-400 hover:text-blue-400 text-sm transition-colors"
                 >
                   Reply
                 </button>
-                
+               
                 {comment.replies && comment.replies.length > 0 && (
                   <span className="text-xs text-gray-500">
                     {comment.replies.length} {comment.replies.length === 1 ? 'reply' : 'replies'}
                   </span>
                 )}
               </div>
-              
+             
               <div className="text-xs text-gray-400">
                 {new Date(comment.createdAt).toLocaleDateString()}
               </div>
@@ -292,14 +308,23 @@ const CommentCard: React.FC<CommentCardProps> = ({
 
       {showReplyForm && (
         <div className={shouldIndent ? 'ml-8' : ''}>
+          {replyError && (
+            <div className="bg-red-900 border border-red-700 rounded-lg p-3 mb-4">
+              <p className="text-red-200 text-sm">{replyError}</p>
+            </div>
+          )}
           <CommentForm
             onSubmit={handleReplySubmit}
             isLoading={false}
             cigaretteName={cigaretteName}
+            cigaretteId={cigaretteId}
             placeholder={`Reply to ${comment.user}...`}
             parentId={comment.parentId || comment.id}
             replyingTo={comment.user}
-            onCancel={() => setShowReplyForm(false)}
+            onCancel={() => {
+              setShowReplyForm(false);
+              setReplyError('');
+            }}
             showRating={true}
           />
         </div>
@@ -317,7 +342,7 @@ const CommentCard: React.FC<CommentCardProps> = ({
               onVoteUpdate={onVoteUpdate}
               onCommentDelete={onCommentDelete}
               onNewReply={onNewReply}
-              depth={1} 
+              depth={1}
             />
           ))}
         </div>

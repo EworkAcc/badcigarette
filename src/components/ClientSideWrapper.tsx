@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react';
 import { getAuthCookie, getUserImage, getUserDisplayName, UserData, setAuthCookie } from '@/lib/authUtils.client';
 import ReviewPopup from './ReviewPopUp';
+import RateLimitWarning from './RateLimitWarning';
 
 interface ClientSideWrapperProps {
   cigaretteId: string;
@@ -15,6 +16,8 @@ const ClientSideWrapper: React.FC<ClientSideWrapperProps> = ({ cigaretteId }) =>
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [userData, setUserData] = useState<UserData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [canPost, setCanPost] = useState(true);
+  const [rateLimitError, setRateLimitError] = useState<string>('');
   const router = useRouter();
   const { data: session, status } = useSession();
 
@@ -22,7 +25,7 @@ const ClientSideWrapper: React.FC<ClientSideWrapperProps> = ({ cigaretteId }) =>
     const checkAuth = async () => {
       if (session?.user) {
         const cookieUser = getAuthCookie();
-        
+       
         if (cookieUser && cookieUser.loginType === 'google') {
           setUserData(cookieUser);
           setIsLoading(false);
@@ -46,7 +49,7 @@ const ClientSideWrapper: React.FC<ClientSideWrapperProps> = ({ cigaretteId }) =>
             } else {
               const errorData = await response.json().catch(() => ({ message: 'Unknown error' }));
               console.error('Failed to set Google cookie:', response.status, errorData);
-              
+             
               console.log('Falling back to session data');
             }
           } catch (error) {
@@ -62,17 +65,17 @@ const ClientSideWrapper: React.FC<ClientSideWrapperProps> = ({ cigaretteId }) =>
           image: session.user.image || undefined,
           loginType: 'google'
         };
-        
+       
         setUserData(googleUserData);
         setIsLoading(false);
         return;
       }
-      
+     
       const cookieUser = getAuthCookie();
       if (cookieUser) {
         setUserData(cookieUser);
       }
-      
+     
       if (status !== 'loading') {
         setIsLoading(false);
       }
@@ -85,12 +88,17 @@ const ClientSideWrapper: React.FC<ClientSideWrapperProps> = ({ cigaretteId }) =>
     if (isLoading) {
       return;
     }
-    
+   
     if (!userData) {
       alert('Please log in to submit a review');
       return;
     }
-    
+
+    if (!canPost) {
+      alert('Please wait before posting another review');
+      return;
+    }
+   
     setShowReviewPopup(true);
   };
 
@@ -100,12 +108,18 @@ const ClientSideWrapper: React.FC<ClientSideWrapperProps> = ({ cigaretteId }) =>
       return;
     }
 
+    if (!canPost) {
+      alert('Please wait before posting another review');
+      return;
+    }
+
     if (!title.trim()) {
       alert('Please provide a title for your review');
       return;
     }
 
     setIsSubmitting(true);
+    setRateLimitError('');
 
     try {
       if (userData.loginType === 'google') {
@@ -125,15 +139,15 @@ const ClientSideWrapper: React.FC<ClientSideWrapperProps> = ({ cigaretteId }) =>
 
               console.log('Attempting to manually set auth cookie');
               setAuthCookie(userData);
-              
+             
               await new Promise(resolve => setTimeout(resolve, 100));
             }
           } catch (error) {
             console.error('Error setting Google cookie before validation:', error);
-            
+           
             console.log('Attempting to manually set auth cookie as fallback');
             setAuthCookie(userData);
-            
+           
             await new Promise(resolve => setTimeout(resolve, 100));
           }
         }
@@ -182,10 +196,7 @@ const ClientSideWrapper: React.FC<ClientSideWrapperProps> = ({ cigaretteId }) =>
           subCigaretteId: cigaretteId,
           rating,
           reviewText,
-          title,
-          user: userData.name,
-          userEmail: userData.email,
-          userImage: getUserImage(userData)
+          title
         })
       });
 
@@ -195,13 +206,23 @@ const ClientSideWrapper: React.FC<ClientSideWrapperProps> = ({ cigaretteId }) =>
         router.refresh();
       } else {
         const errorData = await reviewResponse.json();
-        alert(errorData.message || 'Failed to submit review');
+        
+        if (reviewResponse.status === 429) {
+          setRateLimitError(errorData.message || 'Post amount exceeded');
+          alert('Post amount exceeded, please wait 48 hours')
+          setCanPost(false);
+        } else {
+          alert(errorData.message || 'Failed to submit review');
+        }
       }
     } catch (error) {
       console.error('Error submitting review:', error);
       alert('Failed to submit review. Please try again.');
     } finally {
       setIsSubmitting(false);
+      setTimeout(() => {
+        window.location.reload();
+      }, 500);
     }
   };
 
@@ -220,16 +241,36 @@ const ClientSideWrapper: React.FC<ClientSideWrapperProps> = ({ cigaretteId }) =>
     }
   };
 
+  const handleRateLimitStatusChange = (canAct: boolean) => {
+    setCanPost(canAct);
+    if (canAct) {
+      setRateLimitError('');
+    }
+  };
+
   return (
     <>
+      <RateLimitWarning 
+        type="post" 
+        cigaretteId={cigaretteId}
+        onStatusChange={handleRateLimitStatusChange}
+      />
+      
+      {rateLimitError && (
+        <div className="bg-red-900 border border-red-700 rounded-lg p-4 mb-6">
+          <h3 className="text-red-300 font-medium mb-2">Review Blocked</h3>
+          <p className="text-red-200 text-sm">{rateLimitError}</p>
+        </div>
+      )}
+
       <div className="bg-gray-800 rounded-lg p-6">
         <h3 className="text-xl font-semibold mb-4 text-red-400">Actions</h3>
         <div className="space-y-3">
-          <button 
+          <button
             onClick={handleAddReviewClick}
-            disabled={isLoading || isSubmitting}
+            disabled={isLoading || isSubmitting || !canPost}
             className={`w-full py-2 px-4 rounded-md font-medium transition-colors ${
-              isLoading || isSubmitting
+              isLoading || isSubmitting || !canPost
                 ? 'bg-gray-600 text-gray-400 cursor-not-allowed'
                 : userData
                 ? 'bg-red-600 hover:bg-red-700 text-white'
@@ -240,14 +281,16 @@ const ClientSideWrapper: React.FC<ClientSideWrapperProps> = ({ cigaretteId }) =>
               'Loading...'
             ) : isSubmitting ? (
               'Submitting...'
+            ) : !canPost ? (
+              'Rate Limited'
             ) : userData ? (
               'Add Review'
             ) : (
               'Login to Review'
             )}
           </button>
-          
-          <button 
+         
+          <button
             onClick={handleShareCigarette}
             className="w-full bg-gray-600 hover:bg-gray-500 text-white py-2 px-4 rounded-md font-medium transition-colors"
           >
@@ -258,9 +301,9 @@ const ClientSideWrapper: React.FC<ClientSideWrapperProps> = ({ cigaretteId }) =>
         {userData && (
           <div className="mt-4 pt-4 border-t border-gray-700">
             <div className="flex items-center space-x-2">
-              <img 
-                src={getUserImage(userData)} 
-                alt={getUserDisplayName(userData)} 
+              <img
+                src={getUserImage(userData)}
+                alt={getUserDisplayName(userData)}
                 className="w-8 h-8 rounded-full"
                 onError={(e) => {
                   const target = e.target as HTMLImageElement;

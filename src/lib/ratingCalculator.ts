@@ -1,27 +1,55 @@
-export const calculateOverallRating = (posts: any[]): { rating: number; totalReviews: number } => {
+interface Post {
+  rating: number;
+  comments?: Comment[];
+}
+
+interface Comment {
+  rating: number;
+  user: string;
+  userEmail: string;
+  subCigaretteId?: string;
+}
+
+export function calculateOverallRating(posts: Post[]): { rating: number; totalReviews: number } {
   let totalRating = 0;
-  let totalReviews = 0;
+  let reviewCount = 0;
+
+  const userLastCommentRating = new Map<string, number>();
 
   posts.forEach(post => {
-    if (post.rating && post.rating > 0) {
+    if (post.rating > 0) {
       totalRating += post.rating;
-      totalReviews += 1;
+      reviewCount++;
     }
 
-    if (post.comments && Array.isArray(post.comments)) {
-      post.comments.forEach((comment: any) => {
-        if (comment.rating && comment.rating > 0) {
-          totalRating += comment.rating;
-          totalReviews += 1;
+    if (post.comments) {
+      post.comments.forEach(comment => {
+        if (comment.rating > 0) {
+          const userKey = comment.userEmail || comment.user;
+          
+          userLastCommentRating.set(userKey, comment.rating);
         }
       });
     }
   });
 
-  const averageRating = totalReviews > 0 ? totalRating / totalReviews : 0;
+  userLastCommentRating.forEach(rating => {
+    totalRating += rating;
+    reviewCount++;
+  });
+
+  const averageRating = reviewCount > 0 ? totalRating / reviewCount : 0;
   
   return {
     rating: Math.round(averageRating * 10) / 10, 
-    totalReviews
+    totalReviews: reviewCount
   };
-};
+}
+
+export function shouldCommentAffectRating(
+  existingComments: Comment[], 
+  userEmail: string, 
+  userName: string
+): boolean {
+  return true;
+}
