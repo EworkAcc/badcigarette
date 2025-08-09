@@ -8,7 +8,7 @@ import SignupPopup from '@/components/SignupPopup';
 import ForgotPasswordPopup from '@/components/ForgotPasswordPopup';
 import { simpleGoogleSignIn } from '@/lib/googleAuth';
 import { getAuthCookie, removeAuthCookie, UserData } from '@/lib/authUtils.client';
-import TermsOfServicePopup from '@/components/TOS';
+import { TermsOfServicePopup, PrivacyPolicyPopup } from '@/components/PPPTOS';
 
 interface CreateUserParams {
   fname: string;
@@ -451,7 +451,7 @@ const LoginPageContent: React.FC = () => {
             By signing in, you agree to our{' '}
             <TermsOfServicePopup><a href="#" className="text-red-400 hover:text-red-300">Terms of Service</a></TermsOfServicePopup>
             {' '}and{' '}
-            <a href="#" className="text-red-400 hover:text-red-300">Privacy Policy</a>
+            <PrivacyPolicyPopup><a href="#" className="text-red-400 hover:text-red-300">Privacy Policy</a></PrivacyPolicyPopup>
           </p>
         </div>
 
