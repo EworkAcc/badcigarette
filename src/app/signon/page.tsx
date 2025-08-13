@@ -6,6 +6,7 @@ import { signOut } from 'next-auth/react';
 import Navigation from '@/components/NavBar';
 import SignupPopup from '@/components/SignupPopup';
 import ForgotPasswordPopup from '@/components/ForgotPasswordPopup';
+import ConsentPopup from '@/components/ConsentPopup'; 
 import { simpleGoogleSignIn } from '@/lib/googleAuth';
 import { getAuthCookie, removeAuthCookie, UserData } from '@/lib/authUtils.client';
 import { TermsOfServicePopup, PrivacyPolicyPopup } from '@/components/PPPTOS';
@@ -17,6 +18,22 @@ interface CreateUserParams {
   password: string;
   phone: string;
   country: string;
+  termsOfServiceAccepted: boolean; 
+  privacyPolicyAccepted: boolean;  
+  dataSellingConsent: boolean;     
+}
+
+interface GoogleConsentParams {
+  termsOfService: boolean;
+  privacyPolicy: boolean;
+  dataSellingConsent: boolean;
+}
+
+interface PendingGoogleData {
+  googleId: string;
+  email: string;
+  name: string;
+  image?: string;
 }
 
 const LoginPageContent: React.FC = () => {
@@ -36,6 +53,8 @@ const LoginPageContent: React.FC = () => {
   const [userEmail, setUserEmail] = useState('');
   const [error, setError] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
+  const [showGoogleConsentPopup, setShowGoogleConsentPopup] = useState(false);
+  const [pendingGoogleData, setPendingGoogleData] = useState<PendingGoogleData | null>(null);
 
   useEffect(() => {
     const checkAuth = () => {
@@ -46,14 +65,41 @@ const LoginPageContent: React.FC = () => {
 
     checkAuth();
 
-    const errorParam = searchParams.get('error');
-    const messageParam = searchParams.get('message');
+    const handleGoogleConsentRequired = async () => {
+      const errorParam = searchParams.get('error');
+      const messageParam = searchParams.get('message');
 
-    if (errorParam === 'EmailExistsWithDifferentProvider') {
-      setError('This email is already registered with a password. Please sign in with your email and password instead of Google.');
-    } else if (messageParam) {
-      setSuccessMessage(decodeURIComponent(messageParam));
-    }
+      if (errorParam === 'EmailExistsWithDifferentProvider') {
+        setError('This email is already registered with a password. Please sign in with your email and password instead of Google.');
+      } else if (errorParam === 'GoogleConsentRequired') {       
+        console.log('Google consent required - fetching pending user data');
+        
+        let pendingData = null;
+        
+        const sessionData = sessionStorage.getItem('pendingGoogleUser');
+        if (sessionData) {
+          try {
+            pendingData = JSON.parse(sessionData);
+            console.log('Found pending data in sessionStorage:', pendingData);
+          } catch (e) {
+            console.error('Error parsing sessionStorage data:', e);
+          }
+        }
+
+        if (!pendingData) {
+          console.log('No pending data found, showing error');
+          setError('Google sign-in session expired. Please try signing in again.');
+          return;
+        }
+
+        setPendingGoogleData(pendingData);
+        setShowGoogleConsentPopup(true);
+      } else if (messageParam) {
+        setSuccessMessage(decodeURIComponent(messageParam));
+      }
+    };
+
+    handleGoogleConsentRequired();
 
     const handleStorageChange = () => {
       checkAuth();
@@ -157,6 +203,75 @@ const LoginPageContent: React.FC = () => {
     await simpleGoogleSignIn('/');
   };
 
+  const handleGoogleConsentSubmit = async (consents: GoogleConsentParams) => {
+    if (!pendingGoogleData) {
+      setError('Google sign-in data not found. Please try signing in again.');
+      return;
+    }
+
+    console.log('Submitting Google consent with data:', {
+      pendingData: pendingGoogleData,
+      consents
+    });
+
+    try {
+      const requestBody = {
+        googleId: pendingGoogleData.googleId,
+        email: pendingGoogleData.email,
+        name: pendingGoogleData.name,
+        image: pendingGoogleData.image,
+        termsOfServiceAccepted: consents.termsOfService,
+        privacyPolicyAccepted: consents.privacyPolicy,
+        dataSellingConsent: consents.dataSellingConsent
+      };
+
+      console.log('Request body for Google consent:', requestBody);
+
+      const response = await fetch('/api/auth/google-consent', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(requestBody),
+      });
+
+      const responseData = await response.json();
+      console.log('Google consent response:', responseData);
+
+      if (response.ok) {
+        setShowGoogleConsentPopup(false);
+        
+        sessionStorage.removeItem('pendingGoogleUser');
+        if (pendingGoogleData.email) {
+          try {
+            await fetch('/api/auth/pending-google-user', {
+              method: 'DELETE',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ email: pendingGoogleData.email })
+            });
+          } catch (e) {
+            console.error('Error clearing server-side pending data:', e);
+          }
+        }
+        
+        setPendingGoogleData(null);
+        setUserData(responseData.user);
+        
+        setTimeout(() => {
+          window.dispatchEvent(new Event('storage'));
+        }, 100);
+        
+        router.push('/');
+      } else {
+        console.error('Google consent failed:', responseData);
+        setError(responseData.message || 'Failed to complete Google sign-in');
+      }
+    } catch (error) {
+      console.error('Google consent error:', error);
+      setError('Failed to complete Google sign-in. Please try again.');
+    }
+  };
+  
   const handleLogout = async () => {
     try {
       if (userData?.loginType === 'google') {
@@ -185,6 +300,12 @@ const LoginPageContent: React.FC = () => {
   };
 
   const handleSignupSubmit = async (userData: CreateUserParams) => {
+    console.log('Submitting signup with consent data:', {
+      termsOfServiceAccepted: userData.termsOfServiceAccepted,
+      privacyPolicyAccepted: userData.privacyPolicyAccepted,
+      dataSellingConsent: userData.dataSellingConsent
+    });
+
     try {
       const response = await fetch('/api/auth/signup', {
         method: 'POST',
@@ -195,6 +316,7 @@ const LoginPageContent: React.FC = () => {
       });
 
       const responseData = await response.json();
+      console.log('Signup response:', responseData);
 
       if (!response.ok) {
         if (response.status === 409 && responseData.existingAccount) {
@@ -239,6 +361,24 @@ const LoginPageContent: React.FC = () => {
       console.error('Error creating user:', error);
       throw error;
     }
+  };
+
+  const handleConsentPopupClose = () => {
+    setShowGoogleConsentPopup(false);
+    sessionStorage.removeItem('pendingGoogleUser');
+    if (pendingGoogleData?.email) {
+      fetch('/api/auth/pending-google-user', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: pendingGoogleData.email })
+      }).catch(e => console.error('Error clearing server-side pending data:', e));
+    }
+    setPendingGoogleData(null);
+    
+    const url = new URL(window.location.href);
+    url.searchParams.delete('error');
+    url.searchParams.delete('googleConsent');
+    window.history.replaceState({}, '', url.toString());
   };
 
   if (isLoading) {
@@ -481,6 +621,14 @@ const LoginPageContent: React.FC = () => {
         isOpen={showForgotPasswordPopup}
         onClose={() => setShowForgotPasswordPopup(false)}
       />
+
+      <ConsentPopup
+        isOpen={showGoogleConsentPopup}
+        onClose={handleConsentPopupClose}
+        onConsent={handleGoogleConsentSubmit}
+        userType="google"
+      />
+      
     </div>
   );
 };

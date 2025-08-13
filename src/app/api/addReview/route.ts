@@ -4,6 +4,7 @@ import subCigarettes from '@/models/subCigarettes';
 import generateUniqueId from '@/lib/uniqueID';
 import { getAuthCookie } from '@/lib/authUtils.server';
 import { RateLimitService } from '@/lib/rateLimitService';
+import { MarketingAnalyticsService } from '@/lib/marketingAnalyticsService';
 
 export async function POST(request: NextRequest) {
   try {
@@ -81,6 +82,13 @@ export async function POST(request: NextRequest) {
     const savedSubCigarette = await subCigarette.save();
 
     await RateLimitService.recordPost(userData.id, userData.email, subCigaretteId);
+
+    const isGoogleUser = userData.loginType === 'google';
+    const ipAddress = MarketingAnalyticsService.getIpAddress(request);
+    
+    await MarketingAnalyticsService.updateIpVisit(userData.id, userData.email, ipAddress, isGoogleUser);
+    
+    await MarketingAnalyticsService.updateReviewCount(userData.id, userData.email, subCigaretteId, isGoogleUser);
 
     return NextResponse.json(
       {

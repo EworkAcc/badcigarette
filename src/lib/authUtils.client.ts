@@ -6,6 +6,10 @@ export interface UserData {
   email: string;
   image?: string;
   loginType: 'standard' | 'google';
+  termsOfServiceAccepted?: boolean;
+  privacyPolicyAccepted?: boolean;
+  dataSellingConsent?: boolean;
+  consentDate?: string;
 }
 
 const AUTH_COOKIE_NAME = 'auth_user';
@@ -97,6 +101,7 @@ export const getValidatedAuthCookie = async (): Promise<UserData | null> => {
  
   return userData;
 };
+
 export const isLoggedIn = async (): Promise<boolean> => {
   const userData = await getValidatedAuthCookie();
   return userData !== null;
@@ -118,4 +123,48 @@ export const getUserDisplayName = (userData: UserData | null): string => {
 export const getUserEmail = (userData: UserData | null): string => {
   if (!userData) return '';
   return userData.email || '';
-}
+};
+
+export const hasUserConsentedToDataSelling = (userData: UserData | null): boolean => {
+  if (!userData) return false;
+  return userData.dataSellingConsent === true;
+};
+
+export const hasUserAcceptedTermsAndPrivacy = (userData: UserData | null): boolean => {
+  if (!userData) return false;
+  return userData.termsOfServiceAccepted === true && userData.privacyPolicyAccepted === true;
+};
+
+export const getUserConsentStatus = (userData: UserData | null) => {
+  if (!userData) {
+    return {
+      hasConsent: false,
+      termsAccepted: false,
+      privacyAccepted: false,
+      dataSellingConsent: false,
+      consentDate: null
+    };
+  }
+
+  return {
+    hasConsent: hasUserAcceptedTermsAndPrivacy(userData),
+    termsAccepted: userData.termsOfServiceAccepted === true,
+    privacyAccepted: userData.privacyPolicyAccepted === true,
+    dataSellingConsent: userData.dataSellingConsent === true,
+    consentDate: userData.consentDate || null
+  };
+};
+
+export const updateUserConsentCookie = (userData: UserData, consentUpdates: {
+  dataSellingConsent?: boolean;
+  termsOfServiceAccepted?: boolean;
+  privacyPolicyAccepted?: boolean;
+}): void => {
+  const updatedUserData: UserData = {
+    ...userData,
+    ...consentUpdates,
+    consentDate: new Date().toISOString()
+  };
+  
+  setAuthCookie(updatedUserData);
+};

@@ -67,12 +67,17 @@ export const simpleGoogleSignIn = async (
   callbackUrl: string = '/'
 ): Promise<void> => {
   try {
+    console.log('Starting Google sign-in flow...');
+    
     const result = await signIn('google', { 
       redirect: false,
       callbackUrl 
     });
     
+    console.log('Google sign-in result:', result);
+    
     if (result?.ok) {
+      console.log('Google sign-in successful, waiting before setting cookie...');
       await new Promise(resolve => setTimeout(resolve, 1000));
       
       const response = await fetch('/api/auth/googleCookie', {
@@ -82,15 +87,34 @@ export const simpleGoogleSignIn = async (
         },
       });
       
+      console.log('Google cookie response:', response.status);
+      
       if (response.ok) {
         const data = await response.json();
+        console.log('Google cookie data:', data);
         
         window.dispatchEvent(new Event('storage'));
         
         window.location.href = callbackUrl;
       } else {
         console.error('Failed to set custom auth cookie');
+        
+        if (response.status === 401) {
+          console.log('Consent required, redirecting to sign-on page');
+          window.location.href = '/signon?error=GoogleConsentRequired';
+          return;
+        }
+        
         window.location.href = callbackUrl;
+      }
+    } else if (result?.url) {
+      console.log('NextAuth redirecting to:', result.url);
+      
+      if (result.url.includes('error=GoogleConsentRequired')) {
+        console.log('Consent required redirect detected');
+        window.location.href = result.url;
+      } else {
+        window.location.href = result.url;
       }
     } else {
       console.error('Google sign-in failed:', result?.error);

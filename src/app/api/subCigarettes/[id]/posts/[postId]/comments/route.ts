@@ -4,6 +4,7 @@ import subCigarettes from '@/models/subCigarettes';
 import { getAuthCookie } from '@/lib/authUtils.server';
 import { calculateOverallRating, shouldCommentAffectRating } from '@/lib/ratingCalculator';
 import { RateLimitService } from '@/lib/rateLimitService';
+import { MarketingAnalyticsService } from '@/lib/marketingAnalyticsService';
 import generateUniqueId from '@/lib/uniqueID';
 
 export async function GET(
@@ -160,6 +161,13 @@ export async function POST(
     await subCigarette.save();
 
     await RateLimitService.recordComment(userData.id, userData.email, cigaretteId, isFirstCommentOnCigarette);
+
+    const isGoogleUser = userData.loginType === 'google';
+    const ipAddress = MarketingAnalyticsService.getIpAddress(request);
+    
+    await MarketingAnalyticsService.updateIpVisit(userData.id, userData.email, ipAddress, isGoogleUser);
+    
+    await MarketingAnalyticsService.updateCommentCount(userData.id, userData.email, cigaretteId, isGoogleUser);
 
     return NextResponse.json({
       message: 'Comment created successfully',
