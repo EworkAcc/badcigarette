@@ -157,7 +157,7 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     console.error('Google consent error:', error);
     return NextResponse.json(
-      { message: 'Internal server error', error: error },
+      { message: `Internal server error: ${error || 'Unknown error'}`, error: error },
       { status: 500 }
     );
   }

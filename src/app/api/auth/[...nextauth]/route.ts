@@ -183,7 +183,7 @@ async function storePendingGoogleUser(email: string, userData: any) {
   try {
     await connectDB();
     
-    const PendingGoogleUser = require('@/models/PendingGoogleUser').default;
+    const PendingGoogleUser = require('@/models/pendingGoogleUser').default;
     
     await PendingGoogleUser.deleteMany({ email });
     
