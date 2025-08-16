@@ -26,8 +26,7 @@ const PendingGoogleUserSchema: Schema = new Schema({
   },
   expiresAt: {
     type: Date,
-    required: true,
-    index: { expireAfterSeconds: 0 }
+    required: true
   }
 }, {
   timestamps: true

@@ -78,7 +78,7 @@ export const authConfig: NextAuthOptions = {
 
             await storePendingGoogleUser(user.email, pendingUserData);
             
-            return '/signon?error=GoogleConsentRequired';
+            return `/signon?error=GoogleConsentRequired=${encodeURIComponent(user.email)}`;
           }
         } catch (error) {
           console.error('Error during Google sign-in:', error);

@@ -65,51 +65,56 @@ const LoginPageContent: React.FC = () => {
 
     checkAuth();
 
-    const handleGoogleConsentRequired = async () => {
-        const errorParam = searchParams.get("error");
-        const messageParam = searchParams.get("message");
-        const emailParam = searchParams.get("email");
+        const handleGoogleConsentRequired = async () => {
+      const errorParam = searchParams.get("error");
+      const messageParam = searchParams.get("message");
+      const emailParam = searchParams.get("email");
 
-        if (errorParam === "EmailExistsWithDifferentProvider") {
-          setError("This email is already registered with a password. Please sign in with your email and password instead of Google.");
-        } else if (errorParam === "GoogleConsentRequired") {
-          console.log("Google consent required - fetching pending user data");
+      if (errorParam === "EmailExistsWithDifferentProvider") {
+        setError("This email is already registered with a password. Please sign in with your email and password instead of Google.");
+      } else if (errorParam === "GoogleConsentRequired") {
+        console.log("Google consent required - fetching pending user data");
 
-          if (!emailParam) {
-            console.error("GoogleConsentRequired error without email parameter.");
+        if (!emailParam) {
+          console.error("GoogleConsentRequired error without email parameter.");
+          setError("Google sign-in session expired. Please try signing in again.");
+          return;
+        }
+
+        try {
+          const response = await fetch(`/api/auth/pendingGoogleUser?email=${encodeURIComponent(emailParam)}`);
+          if (!response.ok) {
+            throw new Error(`Failed to fetch pending user data: ${response.statusText}`);
+          }
+          const data = await response.json();
+          const pendingData = data.userData;
+
+          if (!pendingData) {
+            console.log("No pending data found for email, showing error");
             setError("Google sign-in session expired. Please try signing in again.");
             return;
           }
 
-          try {
-            const response = await fetch(`/api/auth/pendingGoogleUser?email=${encodeURIComponent(emailParam)}`);
-            if (!response.ok) {
-              throw new Error(`Failed to fetch pending user data: ${response.statusText}`);
-            }
-            const data = await response.json();
-            const pendingData = data.userData;
+          setPendingGoogleData(pendingData);
+          setShowGoogleConsentPopup(true);
+        } catch (e) {
+          console.error("Error fetching pending Google user data:", e);
+          setError("Google sign-in session expired. Please try signing in again.");
+        }
+      } else if (messageParam) {
+        setSuccessMessage(decodeURIComponent(messageParam));
+      }
+    };
 
-            if (!pendingData) {
-              console.log("No pending data found for email, showing error");
-              setError("Google sign-in session expired. Please try signing in again.");
-              return;
-            }
+    handleGoogleConsentRequired();
 
-            setPendingGoogleData(pendingData);
-            setShowGoogleConsentPopup(true);
-          } catch (e) {
-            console.error("Error fetching pending Google user data:", e);
-            setError("Google sign-in session expired. Please try signing in again.");
-          }
-        } else if (messageParam) {
-          setSuccessMessage(decodeURIComponent(messageParam));
-        }    const handleStorageChange = () => {
+    const handleStorageChange = () => {
       checkAuth();
     };
 
+
     window.addEventListener('storage', handleStorageChange);
     return () => window.removeEventListener('storage', handleStorageChange);
-  }
   }, [searchParams]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -368,7 +373,6 @@ const LoginPageContent: React.FC = () => {
 
   const handleConsentPopupClose = () => {
     setShowGoogleConsentPopup(false);
-    // sessionStorage.removeItem("pendingGoogleUser"); // No longer needed as data is fetched from server
     if (pendingGoogleData?.email) {
       fetch("/api/auth/pendingGoogleUser", {
         method: "DELETE",
@@ -380,7 +384,7 @@ const LoginPageContent: React.FC = () => {
     
     const url = new URL(window.location.href);
     url.searchParams.delete("error");
-    url.searchParams.delete("email"); // Also remove the email parameter
+    url.searchParams.delete("email"); 
     url.searchParams.delete("googleConsent");
     window.history.replaceState({}, "", url.toString());
   };
