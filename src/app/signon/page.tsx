@@ -38,7 +38,7 @@ interface PendingGoogleData {
 
 const LoginPageContent: React.FC = () => {
   const router = useRouter();
-  const searchParams = useSearchParams();
+  const searchParams: URLSearchParams = useSearchParams();
   const [userData, setUserData] = useState<UserData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [formData, setFormData] = useState({
@@ -66,47 +66,50 @@ const LoginPageContent: React.FC = () => {
     checkAuth();
 
     const handleGoogleConsentRequired = async () => {
-      const errorParam = searchParams.get('error');
-      const messageParam = searchParams.get('message');
+        const errorParam = searchParams.get("error");
+        const messageParam = searchParams.get("message");
+        const emailParam = searchParams.get("email");
 
-      if (errorParam === 'EmailExistsWithDifferentProvider') {
-        setError('This email is already registered with a password. Please sign in with your email and password instead of Google.');
-      } else if (errorParam === 'GoogleConsentRequired') {       
-        console.log('Google consent required - fetching pending user data');
-        
-        let pendingData = null;
-        
-        const sessionData = sessionStorage.getItem('pendingGoogleUser');
-        if (sessionData) {
-          try {
-            pendingData = JSON.parse(sessionData);
-            console.log('Found pending data in sessionStorage:', pendingData);
-          } catch (e) {
-            console.error('Error parsing sessionStorage data:', e);
+        if (errorParam === "EmailExistsWithDifferentProvider") {
+          setError("This email is already registered with a password. Please sign in with your email and password instead of Google.");
+        } else if (errorParam === "GoogleConsentRequired") {
+          console.log("Google consent required - fetching pending user data");
+
+          if (!emailParam) {
+            console.error("GoogleConsentRequired error without email parameter.");
+            setError("Google sign-in session expired. Please try signing in again.");
+            return;
           }
-        }
 
-        if (!pendingData) {
-          console.log('No pending data found, showing error');
-          setError('Google sign-in session expired. Please try signing in again.');
-          return;
-        }
+          try {
+            const response = await fetch(`/api/auth/pendingGoogleUser?email=${encodeURIComponent(emailParam)}`);
+            if (!response.ok) {
+              throw new Error(`Failed to fetch pending user data: ${response.statusText}`);
+            }
+            const data = await response.json();
+            const pendingData = data.userData;
 
-        setPendingGoogleData(pendingData);
-        setShowGoogleConsentPopup(true);
-      } else if (messageParam) {
-        setSuccessMessage(decodeURIComponent(messageParam));
-      }
-    };
+            if (!pendingData) {
+              console.log("No pending data found for email, showing error");
+              setError("Google sign-in session expired. Please try signing in again.");
+              return;
+            }
 
-    handleGoogleConsentRequired();
-
-    const handleStorageChange = () => {
+            setPendingGoogleData(pendingData);
+            setShowGoogleConsentPopup(true);
+          } catch (e) {
+            console.error("Error fetching pending Google user data:", e);
+            setError("Google sign-in session expired. Please try signing in again.");
+          }
+        } else if (messageParam) {
+          setSuccessMessage(decodeURIComponent(messageParam));
+        }    const handleStorageChange = () => {
       checkAuth();
     };
 
     window.addEventListener('storage', handleStorageChange);
     return () => window.removeEventListener('storage', handleStorageChange);
+  }
   }, [searchParams]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -227,7 +230,7 @@ const LoginPageContent: React.FC = () => {
 
       console.log('Request body for Google consent:', requestBody);
 
-      const response = await fetch('/api/auth/google-consent', {
+      const response = await fetch("/api/auth/googleConsent", {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -244,7 +247,7 @@ const LoginPageContent: React.FC = () => {
         sessionStorage.removeItem('pendingGoogleUser');
         if (pendingGoogleData.email) {
           try {
-            await fetch('/api/auth/pending-google-user', {
+            await fetch("/api/auth/pendingGoogleUser", {
               method: 'DELETE',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({ email: pendingGoogleData.email })
@@ -365,20 +368,21 @@ const LoginPageContent: React.FC = () => {
 
   const handleConsentPopupClose = () => {
     setShowGoogleConsentPopup(false);
-    sessionStorage.removeItem('pendingGoogleUser');
+    // sessionStorage.removeItem("pendingGoogleUser"); // No longer needed as data is fetched from server
     if (pendingGoogleData?.email) {
-      fetch('/api/auth/pending-google-user', {
-        method: 'DELETE',
-        headers: { 'Content-Type': 'application/json' },
+      fetch("/api/auth/pendingGoogleUser", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email: pendingGoogleData.email })
-      }).catch(e => console.error('Error clearing server-side pending data:', e));
+      }).catch(e => console.error("Error clearing server-side pending data:", e));
     }
     setPendingGoogleData(null);
     
     const url = new URL(window.location.href);
-    url.searchParams.delete('error');
-    url.searchParams.delete('googleConsent');
-    window.history.replaceState({}, '', url.toString());
+    url.searchParams.delete("error");
+    url.searchParams.delete("email"); // Also remove the email parameter
+    url.searchParams.delete("googleConsent");
+    window.history.replaceState({}, "", url.toString());
   };
 
   if (isLoading) {
@@ -396,6 +400,7 @@ const LoginPageContent: React.FC = () => {
          
           <div className="text-center mb-8">
             <h1 className="text-3xl font-bold text-red-400 mb-2">Welcome Back</h1>
+
             <p className="text-gray-400">You are already signed in as {userData.name}</p>
           </div>
 
@@ -542,7 +547,7 @@ const LoginPageContent: React.FC = () => {
                   </svg>
                   Signing In...
                 </>
-              ) : (
+               ) : (
                 'Sign In'
               )}
             </button>
@@ -661,3 +666,7 @@ const LoginPage: React.FC = () => {
 };
 
 export default LoginPage;
+
+
+
+

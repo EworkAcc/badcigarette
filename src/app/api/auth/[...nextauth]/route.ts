@@ -6,6 +6,8 @@ import connectDB from '@/lib/connectDB';
 import { GoogleUser } from '@/models/googleUsers';
 import { checkEmailExists } from '@/lib/emailValidation';
 
+import NextAuth from 'next-auth';
+
 export const authConfig: NextAuthOptions = {
   secret: process.env.NEXTAUTH_SECRET,
   providers: [
@@ -49,7 +51,7 @@ export const authConfig: NextAuthOptions = {
 
               await storePendingGoogleUser(user.email, pendingUserData);
               
-              return '/signon?error=GoogleConsentRequired';
+              return `/signon?error=GoogleConsentRequired&email=${encodeURIComponent(user.email)}`;
             }
             
             const dbUser = await GoogleUser.findOneAndUpdate(
@@ -80,7 +82,7 @@ export const authConfig: NextAuthOptions = {
           }
         } catch (error) {
           console.error('Error during Google sign-in:', error);
-          return false;
+          return '/signon?error=GoogleSignInError'; 
         }
       }
       return true;
@@ -114,7 +116,7 @@ export const authConfig: NextAuthOptions = {
             };
           }
         } catch (error) {
-          console.error('Error fetching user from database:', error);
+          console.error("Error fetching user from database in session callback:", error);
         }
       }
       return session;
@@ -179,7 +181,7 @@ export const authConfig: NextAuthOptions = {
   debug: process.env.NEXT_PUBLIC_ENV === 'development',
 };
 
-async function storePendingGoogleUser(email: string, userData: any) {
+async function storePendingGoogleUser(email: string, userData: any ) {
   try {
     await connectDB();
     
@@ -198,3 +200,7 @@ async function storePendingGoogleUser(email: string, userData: any) {
     console.error('Error storing pending Google user:', error);
   }
 }
+
+const handler = NextAuth(authConfig);
+
+export { handler as GET, handler as POST };
