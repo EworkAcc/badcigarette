@@ -8,7 +8,7 @@ import { checkEmailExists } from '@/lib/emailValidation';
 
 import NextAuth from 'next-auth';
 
-export const authConfig: NextAuthOptions = {
+const authConfig: NextAuthOptions = {
   secret: process.env.NEXTAUTH_SECRET,
   providers: [
     Google({
