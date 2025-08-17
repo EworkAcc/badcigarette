@@ -1,7 +1,7 @@
 import mongoose from 'mongoose';
 
 const MONGO_URL = process.env.NEXT_PUBLIC_MONGO_URL??"undefined";
-console.log(MONGO_URL == "undefined" ? "MONGO_URL is not defined":"MONGO_URL is defined");
+
 if (MONGO_URL == "undefined") {
   throw new Error('Please define the MONGO_URL environment variable in .env (issue in connectDB.ts)');
 }
