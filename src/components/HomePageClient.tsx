@@ -2,10 +2,29 @@
 
 import Link from 'next/link';
 import React, { useState } from 'react';
+import { useRouter } from 'next/navigation';
 
 const HomePageClient: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedFilter, setSelectedFilter] = useState('all');
+  const router = useRouter();
+
+  const handleSearch = () => {
+    const queryParams = new URLSearchParams();
+    if (searchTerm) {
+      queryParams.append('search', searchTerm);
+    }
+    if (selectedFilter && selectedFilter !== 'all') {
+      const typeMap: { [key: string]: string } = {
+        'regular': 'r',
+        'menthol': 'm',
+        'light': 'l',
+        'ultra-light': 'ul',
+      };
+      queryParams.append('type', typeMap[selectedFilter] || selectedFilter);
+    }
+    router.push(`/search?${queryParams.toString()}`);
+  };
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -35,7 +54,10 @@ const HomePageClient: React.FC = () => {
                   <option value="light">Light</option>
                   <option value="ultra-light">Ultra Light</option>
                 </select>
-                <button className="w-full bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-md font-medium">
+                <button 
+                  className="w-full bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-md font-medium"
+                  onClick={handleSearch}
+                >
                   Search
                 </button>
               </div>
@@ -188,3 +210,4 @@ const HomePageClient: React.FC = () => {
 };
 
 export default HomePageClient;
+
