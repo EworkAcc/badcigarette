@@ -1,3 +1,4 @@
+
 "use client"
 
 import React, { useState, useEffect, Suspense } from 'react';
@@ -249,6 +250,13 @@ const LoginPageContent: React.FC = () => {
       if (response.ok) {
         setShowGoogleConsentPopup(false);
         
+        // Show success message to user
+        const successMsg = responseData.isNewUser 
+          ? 'Account created successfully! You are now logged in.' 
+          : 'Successfully logged in with Google!';
+        
+        setSuccessMessage(successMsg);
+        
         sessionStorage.removeItem('pendingGoogleUser');
         if (pendingGoogleData.email) {
           try {
@@ -269,7 +277,10 @@ const LoginPageContent: React.FC = () => {
           window.dispatchEvent(new Event('storage'));
         }, 100);
         
-        router.push('/');
+        // Show success message for 2 seconds before redirecting
+        setTimeout(() => {
+          router.push('/');
+        }, 2000);
       } else {
         console.error('Google consent failed:', responseData);
         setError(responseData.message || 'Failed to complete Google sign-in');
@@ -670,7 +681,3 @@ const LoginPage: React.FC = () => {
 };
 
 export default LoginPage;
-
-
-
-

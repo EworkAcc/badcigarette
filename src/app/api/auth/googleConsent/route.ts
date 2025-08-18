@@ -95,6 +95,7 @@ export async function POST(request: NextRequest) {
         dataSellingConsent,
         consentDate: new Date()
       });
+      user.isNew = true;
 
       console.log('Created new user with consent data:', {
         id: user._id,
@@ -125,7 +126,7 @@ export async function POST(request: NextRequest) {
     console.log('Generated JWT token for user:', user._id);
 
     const responseData = {
-      message: 'Google sign-in completed successfully',
+      message: user.isNew ? 'Account created and Google sign-in completed successfully' : 'Google sign-in completed successfully',
       user: {
         id: user._id.toString(),
         email: user.email,
@@ -135,7 +136,8 @@ export async function POST(request: NextRequest) {
         termsOfServiceAccepted: user.termsOfServiceAccepted,
         privacyPolicyAccepted: user.privacyPolicyAccepted,
         dataSellingConsent: user.dataSellingConsent
-      }
+      },
+      isNewUser: user.isNew || false
     };
 
     console.log('Sending response with user data:', responseData);
@@ -150,7 +152,23 @@ export async function POST(request: NextRequest) {
       path: '/'
     });
 
-    console.log('Set auth cookie');
+    const googleUserData = {
+      id: user._id.toString(),
+      name: user.name,
+      email: user.email,
+      image: user.image,
+      loginType: 'google'
+    };
+
+    response.cookies.set('auth_user', JSON.stringify(googleUserData), {
+      httpOnly: false,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge: 7 * 24 * 60 * 60,
+      path: '/'
+    });
+
+    console.log('Set auth cookie and Google user cookie');
 
     return response;
 
