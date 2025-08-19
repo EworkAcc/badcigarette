@@ -3,6 +3,7 @@
 import { useState, useMemo, useEffect } from 'react';
 import { Search, Filter, Star, ChevronDown, SortAsc, SortDesc } from 'lucide-react';
 import CigaretteSearchCard from './CigaretteSearchCard';
+import { useSearchParams } from 'next/navigation';
 
 interface Cigarette {
   _id: string;
@@ -15,12 +16,16 @@ interface Cigarette {
 }
 
 const CigaretteSearchClient: React.FC = () => {
+  const searchParams = useSearchParams();
+  const initialSearchTerm = searchParams.get('search') || '';
+  const initialFilterType = searchParams.get('type') || 'all';
+
   const [cigarettes, setCigarettes] = useState<Cigarette[]>([]);
   const [loading, setLoading] = useState(true);
-  const [searchTerm, setSearchTerm] = useState('');
+  const [searchTerm, setSearchTerm] = useState(initialSearchTerm);
   const [sortBy, setSortBy] = useState('rating');
   const [sortOrder, setSortOrder] = useState('desc');
-  const [filterType, setFilterType] = useState('all');
+  const [filterType, setFilterType] = useState(initialFilterType);
   const [minRating, setMinRating] = useState(0);
 
   const typeOptions = [
