@@ -7,24 +7,60 @@ export class MarketingAnalyticsService {
   static getIpAddress(request: NextRequest): string {
     const forwarded = request.headers.get('x-forwarded-for');
     if (forwarded) {
-      return forwarded.split(',')[0].trim();
+      const firstIp = forwarded.split(',')[0].trim();
+      if (firstIp && firstIp !== 'unknown') {
+        return firstIp;
+      }
     }
 
     const realIp = request.headers.get('x-real-ip');
-    if (realIp) {
+    if (realIp && realIp !== 'unknown') {
       return realIp.trim();
     }
 
     const cfConnectingIp = request.headers.get('cf-connecting-ip');
-    if (cfConnectingIp) {
+    if (cfConnectingIp && cfConnectingIp !== 'unknown') {
       return cfConnectingIp.trim();
     }
 
-    if ((request as any).ip) {
-      return (request as any).ip;
+    const xClientIp = request.headers.get('x-client-ip');
+    if (xClientIp && xClientIp !== 'unknown') {
+      return xClientIp.trim();
     }
 
-    return '127.0.0.1'; 
+    const xClusterClientIp = request.headers.get('x-cluster-client-ip');
+    if (xClusterClientIp && xClusterClientIp !== 'unknown') {
+      return xClusterClientIp.trim();
+    }
+
+    if ('ip' in request && typeof request.ip === 'string') {
+      const ip = request.ip.trim();
+      if (ip === '::1') {
+        return '127.0.0.1';
+      }
+      if (ip !== '::ffff:127.0.0.1' && ip !== '127.0.0.1') {
+        return ip;
+      }
+    }
+
+    const nextRequest = request as any;
+    if (nextRequest.connection?.remoteAddress) {
+      const remoteAddr = nextRequest.connection.remoteAddress;
+      if (remoteAddr === '::1' || remoteAddr === '::ffff:127.0.0.1') {
+        return '127.0.0.1';
+      }
+      return remoteAddr;
+    }
+
+    if (nextRequest.socket?.remoteAddress) {
+      const socketAddr = nextRequest.socket.remoteAddress;
+      if (socketAddr === '::1' || socketAddr === '::ffff:127.0.0.1') {
+        return '127.0.0.1';
+      }
+      return socketAddr;
+    }
+
+    return '127.0.0.1';
   }
 
   static async updateIpVisit(userId: string, userEmail: string, ipAddress: string, isGoogleUser: boolean = false): Promise<void> {
@@ -32,7 +68,7 @@ export class MarketingAnalyticsService {
       await connectDB();
 
       const Model = isGoogleUser ? GoogleUser : User;
-      const userQuery = isGoogleUser ? { googleId: userId } : { _id: userId };
+      const userQuery = isGoogleUser ? { _id: userId } : { _id: userId };
 
       const user = await Model.findOne(userQuery);
       if (!user) {
@@ -60,7 +96,7 @@ export class MarketingAnalyticsService {
       await connectDB();
 
       const Model = isGoogleUser ? GoogleUser : User;
-      const userQuery = isGoogleUser ? { googleId: userId } : { _id: userId };
+      const userQuery = isGoogleUser ? { _id: userId } : { _id: userId };
 
       const user = await Model.findOne(userQuery);
       if (!user) {
