@@ -222,7 +222,7 @@ const ClientSideWrapper: React.FC<ClientSideWrapperProps> = ({ cigaretteId }) =>
       setIsSubmitting(false);
       setTimeout(() => {
         window.location.reload();
-      }, 500);
+      }, 0);
     }
   };
 

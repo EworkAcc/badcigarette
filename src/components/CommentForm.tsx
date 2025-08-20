@@ -94,7 +94,7 @@ const CommentForm: React.FC<CommentFormProps> = ({
       setIsSubmitting(false);
       setTimeout(() => {
         window.location.reload();
-      }, 500);
+      }, 0);
     }
   };
 
