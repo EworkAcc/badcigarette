@@ -35,7 +35,6 @@ function getTypeDisplayName(type: string): string {
   return typeMap[type] || 'Unknown';
 }
 
-// Calculate ranking score based on rating and review count
 function calculateRankingScore(rating: number, reviewCount: number): number {
   if (reviewCount === 0) return 0;
   
@@ -112,10 +111,9 @@ async function getTopCigarettes(): Promise<SubCigarette[]> {
       };
     });
 
-    // Sort by ranking score instead of just rating
     return processedCigarettes
       .sort((a, b) => b.score - a.score)
-      .slice(0, 5);
+      .slice(0, 10);
       
   } catch (error) {
     console.error('Error fetching top cigarettes:', error);
@@ -173,7 +171,6 @@ const TopCigarettesPage: React.FC = async () => {
                     noOfReviews={cigarette.noOfReviews}
                     reviews={cigarette.posts.length}
                   />
-                  {/* Type badge */}
                   <div className="absolute top-3 right-3">
                     <span className={`px-2 py-1 rounded-full text-xs font-medium ${
                       cigarette.type === 'r' ? 'bg-gray-600 text-gray-200' :
@@ -185,7 +182,6 @@ const TopCigarettesPage: React.FC = async () => {
                       {getTypeDisplayName(cigarette.type)}
                     </span>
                   </div>
-                  {/* Ranking score for debugging - remove in production */}
                   <div className="absolute bottom-2 right-2 text-xs text-gray-500">
                     Score: {cigarette.score.toFixed(2)}
                   </div>
