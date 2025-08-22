@@ -43,6 +43,7 @@ const CommentForm: React.FC<CommentFormProps> = ({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (isSubmitting) return; 
    
     if (!userData) {
       alert('Please log in to comment');

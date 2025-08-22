@@ -103,6 +103,7 @@ const ClientSideWrapper: React.FC<ClientSideWrapperProps> = ({ cigaretteId }) =>
   };
 
   const handleReviewSubmit = async (rating: number, reviewText: string, title: string) => {
+    if (isSubmitting) return; 
     if (!userData) {
       alert('Please log in to submit a review');
       return;
