@@ -405,10 +405,15 @@ const Navigation: React.FC = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
           <Link href="/" className="flex items-center">
-            <div className="flex-shrink-0 flex items-center">
-              <div className="text-white">
-                <h1 className="text-2xl font-bold text-red-500">Bad Cigarettes</h1>
-                <p className="text-xs text-gray-400 mt-1">CIGARETTES ARE BAD</p>
+            <div className="flex items-center space-x-3">
+              <img 
+                src="/cigarettes.png" 
+                alt="Bad Cigarettes Logo" 
+                className="h-14 w-auto object-contain mt-2.5"
+              />
+              <div className="flex flex-col">
+                <span className="text-xl font-bold text-red-500 leading-tight">Bad Cigarettes</span>
+                <span className="text-xs text-gray-400 leading-tight">CIGARETTES ARE BAD</span>
               </div>
             </div>
           </Link>

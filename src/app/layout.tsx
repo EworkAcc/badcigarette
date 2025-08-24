@@ -16,6 +16,11 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "BadCigarette",
   description: "A community to share and discuss cigarettes",
+  icons: {
+    icon: "/favicon.svg",
+    shortcut: "/favicon16x16.png",
+    apple: "/favicon.png"
+  }
 };
 
 export default function RootLayout({
