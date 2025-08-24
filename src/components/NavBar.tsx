@@ -8,11 +8,17 @@ import { useRouter } from 'next/navigation';
 const Navigation: React.FC = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
   const [userData, setUserData] = useState<UserData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isValidating, setIsValidating] = useState(false);
   const [isLoadingRandom, setIsLoadingRandom] = useState(false);
+  const [isSearching, setIsSearching] = useState(false);
+  
   const profileMenuRef = useRef<HTMLDivElement>(null);
+  const searchRef = useRef<HTMLDivElement>(null);
+  const searchInputRef = useRef<HTMLInputElement>(null);
   const router = useRouter();
   
   const { data: session, status } = useSession();
@@ -42,6 +48,30 @@ const Navigation: React.FC = () => {
     } finally {
       setIsLoadingRandom(false);
     }
+  };
+
+  const handleSearch = () => {
+    const queryParams = new URLSearchParams();
+    if (searchQuery) {
+      queryParams.append('search', searchQuery);
+    }
+    router.push(`/search?${queryParams.toString()}`);
+    setIsSearchOpen(false);
+    setSearchQuery('');
+  };
+
+  const handleSearchSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (searchQuery.trim()) {
+      handleSearch();
+    }
+  };
+
+  const handleSearchIconClick = () => {
+    setIsSearchOpen(true);
+    setTimeout(() => {
+      searchInputRef.current?.focus();
+    }, 100);
   };
 
   const validateUser = async (user: UserData) => {
@@ -208,11 +238,30 @@ const Navigation: React.FC = () => {
       if (profileMenuRef.current && !profileMenuRef.current.contains(event.target as Node)) {
         setIsProfileMenuOpen(false);
       }
+      // Only close search if clicking outside and search is open
+      if (isSearchOpen && searchRef.current && !searchRef.current.contains(event.target as Node)) {
+        setIsSearchOpen(false);
+        setSearchQuery('');
+      }
     };
 
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
+    // Only add listener if search is actually open
+    if (isSearchOpen) {
+      // Small delay to prevent immediate closing
+      const timer = setTimeout(() => {
+        document.addEventListener('mousedown', handleClickOutside);
+      }, 50);
+      
+      return () => {
+        clearTimeout(timer);
+        document.removeEventListener('mousedown', handleClickOutside);
+      };
+    } else {
+      // Always listen for profile menu clicks
+      document.addEventListener('mousedown', handleClickOutside);
+      return () => document.removeEventListener('mousedown', handleClickOutside);
+    }
+  }, [isSearchOpen]);
 
   const handleLogout = async () => {
     if (isValidating) return; 
@@ -243,6 +292,45 @@ const Navigation: React.FC = () => {
       window.location.href = '/';
     }
   };
+
+  const SearchComponent = () => (
+    <div className="relative" ref={searchRef}>
+      {isSearchOpen ? (
+        <form onSubmit={handleSearchSubmit} className="flex items-center">
+          <div className="relative w-64">
+            <input
+              ref={searchInputRef}
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search cigarettes..."
+              className="w-full pl-4 pr-10 py-2 bg-gray-700 border border-gray-600 rounded-md text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent"
+              autoFocus
+            />
+            <button
+              type="submit"
+              disabled={!searchQuery.trim()}
+              className="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-white disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
+            </button>
+          </div>
+        </form>
+      ) : (
+        <button
+          onClick={handleSearchIconClick}
+          className="p-2 text-gray-300 hover:text-white hover:bg-gray-700 rounded-md transition-colors"
+          aria-label="Search"
+        >
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+          </svg>
+        </button>
+      )}
+    </div>
+  );
 
   const ProfileMenu = () => (
     <div className="relative" ref={profileMenuRef}>
@@ -357,12 +445,17 @@ const Navigation: React.FC = () => {
           <div className="hidden md:flex items-center space-x-4">
             {isLoading ? (
               <div className="w-8 h-8 bg-gray-700 rounded-full animate-pulse"></div>
-            ) : userData ? (
-              <ProfileMenu />
             ) : (
-              <Link href="/signon" className="bg-red-600 hover:bg-red-700 text-white px-8 py-2 rounded-md text-sm font-medium">
-                Sign On
-              </Link>
+              <>
+                {userData && <SearchComponent />}
+                {userData ? (
+                  <ProfileMenu />
+                ) : (
+                  <Link href="/signon" className="bg-red-600 hover:bg-red-700 text-white px-8 py-2 rounded-md text-sm font-medium">
+                    Sign On
+                  </Link>
+                )}
+              </>
             )}
           </div>
 
@@ -427,6 +520,31 @@ const Navigation: React.FC = () => {
                     <div className="w-full h-10 bg-gray-700 rounded-md animate-pulse"></div>
                   ) : userData ? (
                     <div className="space-y-2">
+                      {/* Mobile Search */}
+                      <div className="px-3 py-2">
+                        <form onSubmit={handleSearchSubmit} className="flex items-center">
+                          <div className="relative w-full">
+                            <input
+                              type="text"
+                              value={searchQuery}
+                              onChange={(e) => setSearchQuery(e.target.value)}
+                              placeholder="Search cigarettes..."
+                              disabled={!searchQuery.trim()}
+                              className="w-full pl-4 pr-10 py-2 bg-gray-700 border border-gray-600 rounded-md text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent"
+                            />
+                            <button
+                              type="submit"
+                              disabled={!searchQuery.trim()}
+                              className="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-white disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                              </svg>
+                            </button>
+                          </div>
+                        </form>
+                      </div>
+                      
                       <div className="flex items-center space-x-3 px-3 py-2">
                         <img
                           src={getUserImage(userData)}
