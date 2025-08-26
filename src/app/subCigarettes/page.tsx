@@ -125,12 +125,11 @@ const TopCigarettesPage: React.FC = async () => {
   const topCigarettes = await getTopCigarettes();
   
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <div className="mb-8">
-        <Navigation/>
-      </div>
+    <div className="min-h-screen bg-gray-900 text-white">
+      <Navigation/>
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <div className="bg-gradient-to-r from-gray-800 to-gray-700 rounded-lg p-8 mb-8">
-        <h1 className="text-4xl font-bold mb-4">Top Rated Cigarettes</h1>
+        <h1 className="text-4xl font-bold mb-4 text-red-400">Top Rated Cigarettes</h1>
         <p className="text-xl text-gray-300">
           Discover the highest rated cigarettes based on community reviews, ratings, and review volume.
         </p>
@@ -204,6 +203,7 @@ const TopCigarettesPage: React.FC = async () => {
       </div>
 
       <AddCigaretteForm />
+      </div>
     </div>
   );
 };

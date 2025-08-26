@@ -131,106 +131,106 @@ const IndividualPostPage: React.FC<PageProps> = async ({ params }) => {
   const netVotes = (post.votes.noOfUpvotes || 0) - (post.votes.noOfDownvotes || 0);
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <div className="mb-8">
-        <Navigation />
-      </div>
+    <div className="min-h-screen bg-gray-900 text-white">
+      <Navigation />
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
 
-      <div className="mb-6">
-        <nav className="text-sm text-gray-400">
-          <a href="/subCigarettes" className="hover:text-red-400">
-            Cigarettes
-          </a>
-          <span className="mx-2">›</span>
-          <a href={`/subCigarettes/${cigaretteId}`} className="hover:text-red-400">
-            {cigarette.name}
-          </a>
-          <span className="mx-2">›</span>
-          <span className="text-white">{post.title}</span>
-        </nav>
-      </div>
+        <div className="mb-6">
+          <nav className="text-sm text-gray-400">
+            <a href="/subCigarettes" className="hover:text-red-400">
+              Cigarettes
+            </a>
+            <span className="mx-2">›</span>
+            <a href={`/subCigarettes/${cigaretteId}`} className="hover:text-red-400">
+              {cigarette.name}
+            </a>
+            <span className="mx-2">›</span>
+            <span className="text-white">{post.title}</span>
+          </nav>
+        </div>
 
-      <div className="bg-gray-800 rounded-lg p-6 mb-8">
-        <div className="flex items-start space-x-4">
-          <UserAvatar 
-            src={post.userImage}
-            alt={post.user}
-            className="w-12 h-12 rounded-full"
-          />
-          <div className="flex-1">
-            <div className="flex items-center justify-between mb-3">
-              <div className="flex items-center space-x-3">
-                <span className="text-white font-semibold text-lg">{post.user}</span>
-                <div className="flex items-center space-x-1">
-                  <span className="text-gray-400 text-sm">rated</span>
-                  <div className="flex items-center">
-                    {[...Array(5)].map((_, starIndex) => (
-                      <span
-                        key={starIndex}
-                        className={`text-lg ${
-                          starIndex < post.rating
-                            ? 'text-yellow-400'
-                            : 'text-gray-500'
-                        }`}
-                      >
-                        ★
-                      </span>
-                    ))}
+        <div className="bg-gray-800 rounded-lg p-6 mb-8">
+          <div className="flex items-start space-x-4">
+            <UserAvatar 
+              src={post.userImage}
+              alt={post.user}
+              className="w-12 h-12 rounded-full"
+            />
+            <div className="flex-1">
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center space-x-3">
+                  <span className="text-white font-semibold text-lg">{post.user}</span>
+                  <div className="flex items-center space-x-1">
+                    <span className="text-gray-400 text-sm">rated</span>
+                    <div className="flex items-center">
+                      {[...Array(5)].map((_, starIndex) => (
+                        <span
+                          key={starIndex}
+                          className={`text-lg ${
+                            starIndex < post.rating
+                              ? 'text-yellow-400'
+                              : 'text-gray-500'
+                          }`}
+                        >
+                          ★
+                        </span>
+                      ))}
+                    </div>
+                    <span className="text-gray-400 text-sm">for {cigarette.name}</span>
                   </div>
-                  <span className="text-gray-400 text-sm">for {cigarette.name}</span>
+                </div>
+                <div className="text-sm text-gray-400">
+                  {new Date(post.createdAt).toLocaleDateString()}
                 </div>
               </div>
-              <div className="text-sm text-gray-400">
-                {new Date(post.createdAt).toLocaleDateString()}
+              
+              <h1 className="text-2xl font-bold text-white mb-4">{post.title}</h1>
+              <p className="text-gray-300 text-lg leading-relaxed mb-4">{post.body}</p>
+              
+              <div className="flex items-center space-x-6">
+                <div className="flex items-center space-x-2">
+                  <button className="text-gray-400 hover:text-green-400 transition-colors">
+                    ↑
+                  </button>
+                  <span className="text-white font-medium">{netVotes}</span>
+                  <button className="text-gray-400 hover:text-red-400 transition-colors">
+                    ↓
+                  </button>
+                </div>
+                <span className="text-gray-400 text-sm">
+                  💬 {post.comments.length} comments
+                </span>
               </div>
-            </div>
-            
-            <h1 className="text-2xl font-bold text-white mb-4">{post.title}</h1>
-            <p className="text-gray-300 text-lg leading-relaxed mb-4">{post.body}</p>
-            
-            <div className="flex items-center space-x-6">
-              <div className="flex items-center space-x-2">
-                <button className="text-gray-400 hover:text-green-400 transition-colors">
-                  ↑
-                </button>
-                <span className="text-white font-medium">{netVotes}</span>
-                <button className="text-gray-400 hover:text-red-400 transition-colors">
-                  ↓
-                </button>
-              </div>
-              <span className="text-gray-400 text-sm">
-                💬 {post.comments.length} comments
-              </span>
             </div>
           </div>
         </div>
-      </div>
 
-      <CommentSection 
-        postId={postId}
-        cigaretteId={cigaretteId}
-        cigaretteName={cigarette.name}
-        initialComments={post.comments}
-      />
+        <CommentSection 
+          postId={postId}
+          cigaretteId={cigaretteId}
+          cigaretteName={cigarette.name}
+          initialComments={post.comments}
+        />
 
-      <div className="bg-red-900 border border-red-700 rounded-lg p-6 mt-8">
-        <h3 className="text-lg font-semibold mb-2 text-red-300">Health Warning</h3>
-        <p className="text-sm text-red-200 mb-3">
-          Smoking cigarettes causes cancer, heart disease, stroke, lung diseases, diabetes, and COPD.
-          Quitting smoking greatly reduces your risk of disease and death.
-        </p>
-        <button className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-md text-sm font-medium">
-          Get Help Quitting
-        </button>
-      </div>
+        <div className="bg-red-900 border border-red-700 rounded-lg p-6 mt-8">
+          <h3 className="text-lg font-semibold mb-2 text-red-300">Health Warning</h3>
+          <p className="text-sm text-red-200 mb-3">
+            Smoking cigarettes causes cancer, heart disease, stroke, lung diseases, diabetes, and COPD.
+            Quitting smoking greatly reduces your risk of disease and death.
+          </p>
+          <button className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-md text-sm font-medium">
+            Get Help Quitting
+          </button>
+        </div>
 
-      <div className="mt-8 text-center">
-        <a
-          href={`/subCigarettes/${cigaretteId}`}
-          className="inline-flex items-center text-red-400 hover:text-red-300 font-medium"
-        >
-          ← Back to {cigarette.name}
-        </a>
+        <div className="mt-8 text-center">
+          <a
+            href={`/subCigarettes/${cigaretteId}`}
+            className="inline-flex items-center text-red-400 hover:text-red-300 font-medium"
+          >
+            ← Back to {cigarette.name}
+          </a>
+        </div>
       </div>
     </div>
   );
