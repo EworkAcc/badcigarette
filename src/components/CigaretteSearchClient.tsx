@@ -84,8 +84,8 @@ const CigaretteSearchClient: React.FC = () => {
             id: "marlboro-red",
             name: "Marlboro Red", 
             description: "Full flavor cigarette with a bold taste",
-            rating: 4.2,
-            noOfReviews: 150,
+            rating: 0.0,
+            noOfReviews: 0,
             type: "r"
           },
           {
@@ -93,8 +93,8 @@ const CigaretteSearchClient: React.FC = () => {
             id: "camel-lights",
             name: "Camel Lights",
             description: "Light cigarette with smooth flavor", 
-            rating: 3.8,
-            noOfReviews: 89,
+            rating: 0.0,
+            noOfReviews: 0,
             type: "l"
           },
           {
@@ -102,8 +102,8 @@ const CigaretteSearchClient: React.FC = () => {
             id: "newport-menthol",
             name: "Newport Menthol",
             description: "Cool menthol taste with refreshing finish",
-            rating: 4.5,
-            noOfReviews: 210,
+            rating: 0.0,
+            noOfReviews: 0,
             type: "m"
           }
         ]);

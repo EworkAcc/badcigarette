@@ -210,7 +210,7 @@ const ClientSideWrapper: React.FC<ClientSideWrapperProps> = ({ cigaretteId }) =>
         
         if (reviewResponse.status === 429) {
           setRateLimitError(errorData.message || 'Post amount exceeded');
-          alert('Post amount exceeded, please wait 48 hours')
+          alert('Post amount exceeded')
           setCanPost(false);
         } else {
           alert(errorData.message || 'Failed to submit review');
