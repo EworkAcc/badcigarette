@@ -17,9 +17,9 @@ export const metadata: Metadata = {
   title: "BadCigarette",
   description: "A community to share and discuss cigarettes",
   icons: {
-    icon: "favicon.svg",
-    shortcut: "favicon.png",
-    apple: "favicon.png"
+    icon: "/faviconSVG.svg",
+    shortcut: "/faviconPNG.png",
+    apple: "/favicon.png"
   }
 };
 

@@ -395,7 +395,7 @@ const Navigation: React.FC = () => {
   return (
     <nav className="bg-gray-900 border-b border-gray-700">
       <div className="bg-gray-800 text-center py-2 text-sm text-gray-300">
-        <span className="font-semibold">10% of profits donated to <span className="text-blue-300 underline hover:text-blue-400"><Link href="https://truthinitiative.org/">Truth Initiative</Link></span></span> | Fighting tobacco addiction through awareness
+        <span className="font-semibold">10% of profits donated to <span className="text-blue-300 underline hover:text-blue-400"><Link href="https://truthinitiative.org/">Truth Initiative</Link></span></span> 
       </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
