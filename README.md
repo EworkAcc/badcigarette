@@ -28,6 +28,3 @@ Warm Gray: #6E6E6E
 Ivory White: #F1E9D2 
 Soft Bronze: #8C6B35
 ```
-
-
-HELLO WORLD
